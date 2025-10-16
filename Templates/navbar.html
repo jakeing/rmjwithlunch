@@ -1,0 +1,78 @@
+<!-- templates/navbar.html -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top py-2">
+  <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+    <img src="{{ url_for('static', filename='RMJ logo.png') }}" alt="RMJ Logo" class="mr-2">
+    <span class="h5 mb-0 d-none d-sm-inline">RMJ Dashboard</span>
+  </a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarNav">
+    <ul class="navbar-nav mr-auto">
+      <!-- Work Orders -->
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="woDropdown" role="button" data-toggle="dropdown">Work Orders</a>
+        <div class="dropdown-menu" aria-labelledby="woDropdown">
+          <a class="dropdown-item" href="{{ url_for('index') }}">Open</a>
+          <a class="dropdown-item" href="{{ url_for('completed_work_orders') }}">Completed</a>
+          <a class="dropdown-item" href="{{ url_for('closed_work_orders') }}">Closed</a>
+        </div>
+      </li>
+      <!-- Projects - New Section -->
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="projectsDropdown" role="button" data-toggle="dropdown">Projects</a>
+        <div class="dropdown-menu" aria-labelledby="projectsDropdown">
+          <a class="dropdown-item" href="{{ url_for('projects') }}">All Projects</a>
+          <a class="dropdown-item" href="{{ url_for('new_project') }}">New Project</a>
+        </div>
+      </li>
+      <!-- Timesheets -->
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="tsDropdown" role="button" data-toggle="dropdown">Timesheets</a>
+        <div class="dropdown-menu" aria-labelledby="tsDropdown">
+          <a class="dropdown-item" href="{{ url_for('new_timesheet') }}">New Entry</a>
+          <a class="dropdown-item" href="{{ url_for('select_weekly_timesheet') }}">Select Weekly</a>
+          <a class="dropdown-item" href="/workorder/reassign_entries">Reassign Entries</a>
+        </div>
+      </li>
+      <!-- Actions -->
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="actionsDropdown" role="button" data-toggle="dropdown">Actions</a>
+        <div class="dropdown-menu" aria-labelledby="actionsDropdown">
+          <a class="dropdown-item" href="{{ url_for('new_work_order') }}">Create WO</a>
+          <a class="dropdown-item" href="{{ url_for('import_excel') }}">Import Excel</a>
+          <a class="dropdown-item" href="{{ url_for('export_excel') }}">Export Excel</a>
+        </div>
+      </li>
+      <!-- Admin -->
+      {% if session.get('user_id') and (User.query.get(session.get('user_id')).role.lower() == 'admin' or User.query.get(session.get('user_id')).username.lower() == 'admin') %}
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-toggle="dropdown">Admin</a>
+        <div class="dropdown-menu" aria-labelledby="adminDropdown">
+          <a class="dropdown-item" href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+          <a class="dropdown-item" href="{{ url_for('admin_users') }}">User Mgmt</a>
+          <a class="dropdown-item" href="{{ url_for('admin_import_time_entries') }}">Import Time</a>
+          <a class="dropdown-item" href="{{ url_for('admin_email_settings') }}">Notifications</a>
+          <a class="dropdown-item" href="{{ url_for('classify_work_orders') }}">Classify Work Orders</a>
+        </div>
+      </li>
+      {% endif %}
+    </ul>
+    <!-- Search inputs -->
+    <div class="d-flex flex-column flex-md-row">
+      <!-- Search all work orders -->
+      <form class="form-inline my-2 my-lg-0" action="{{ url_for('search') }}" method="get">
+        <input type="hidden" name="status" value="all">
+        <div class="input-group input-group-sm">
+          <input class="form-control form-control-sm" name="query" type="search" placeholder="Search All WOs" aria-label="Search All">
+          <div class="input-group-append">
+            <button class="btn btn-outline-primary btn-sm" type="submit">Search</button>
+          </div>
+        </div>
+      </form>
+    </div>
+    <ul class="navbar-nav ml-md-3 mt-2 mt-md-0">
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
+    </ul>
+  </div>
+</nav>

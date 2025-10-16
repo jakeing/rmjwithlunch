@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Login - RMJ Dashboard</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    /* Body and background styles */
+    body {
+      background-color: #f8f9fa;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+    }
+    
+    /* Container styling */
+    .login-container {
+      max-width: 450px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+    
+    /* Card styling */
+    .card {
+      border-radius: .35rem;
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+      border: none;
+      overflow: hidden;
+    }
+    
+    .card-header {
+      background-color: #ffffff;
+      padding: 1.5rem 1.5rem 0.5rem;
+      border-bottom: none;
+      text-align: center;
+    }
+    
+    .card-body {
+      padding: 1.5rem;
+    }
+    
+    /* Logo styling */
+    .login-logo {
+      height: 60px;
+      margin-bottom: 1rem;
+    }
+    
+    /* Form styling */
+    .form-control {
+      border-radius: .25rem;
+      padding: 0.75rem 1rem;
+      height: auto;
+      font-size: 1rem;
+      border: 1px solid #ced4da;
+      background-color: #f8f9fa;
+    }
+    
+    .form-control:focus {
+      border-color: #80bdff;
+      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+      background-color: #ffffff;
+    }
+    
+    label {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #495057;
+    }
+    
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    
+    /* Button styling */
+    .btn-primary {
+      padding: 0.75rem 1rem;
+      font-weight: 600;
+      border-radius: .25rem;
+      background-color: #007bff;
+      border-color: #007bff;
+    }
+    
+    .btn-primary:hover {
+      background-color: #0069d9;
+      border-color: #0062cc;
+    }
+    
+    .btn-block {
+      display: block;
+      width: 100%;
+    }
+    
+    /* Alert styling */
+    .alert-danger {
+      border-radius: .25rem;
+      border-left: 4px solid #dc3545;
+    }
+    
+    /* Link styling */
+    .btn-link {
+      color: #007bff;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .btn-link:hover {
+      color: #0056b3;
+      text-decoration: underline;
+    }
+    
+    /* Footer section */
+    .login-footer {
+      text-align: center;
+      margin-top: 1.5rem;
+      color: #6c757d;
+      font-size: 0.875rem;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 576px) {
+      .login-container {
+        width: 100%;
+        padding: 1rem;
+      }
+      
+      .card {
+        border-radius: 0;
+      }
+    }
+    
+    /* Animation effect */
+    .fade-in {
+      animation: fadeIn ease 0.6s;
+    }
+    
+    @keyframes fadeIn {
+      0% {opacity: 0;}
+      100% {opacity: 1;}
+    }
+  </style>
+</head>
+<body>
+  <div class="container login-container fade-in">
+    <div class="card">
+      <div class="card-header">
+        <img src="{{ url_for('static', filename='RMJ logo.png') }}" alt="RMJ Logo" class="login-logo">
+        <h1 class="h3 mb-3 font-weight-normal">Dashboard Login</h1>
+      </div>
+      
+      <div class="card-body">
+        {% if error %}
+          <div class="alert alert-danger">
+            <strong>Error:</strong> {{ error }}
+          </div>
+        {% endif %}
+        
+        <form method="POST" action="{{ url_for('login') }}">
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" class="form-control" placeholder="Enter your username" required autofocus>
+          </div>
+          
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" class="form-control" placeholder="Enter your password" required>
+          </div>
+          
+          <button type="submit" class="btn btn-primary btn-block">Log In</button>
+          
+          <div class="mt-4 text-center">
+            <a href="{{ url_for('reset_password') }}" class="btn btn-link">Forgot Password?</a>
+          </div>
+        </form>
+      </div>
+    </div>
+    
+    <div class="login-footer">
+      <p>&copy; 2025 RMJ Consulting. All rights reserved.</p>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

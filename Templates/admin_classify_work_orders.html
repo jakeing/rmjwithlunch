@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Classify Work Orders - RMJ Dashboard</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+  <style>
+    /* Navbar */
+    .navbar { background-color: #ffffff; }
+    .navbar-brand img { height: 40px; }
+    .dropdown-menu { border-radius: .35rem; }
+
+    /* Card styling */
+    .card {
+      border-radius: .35rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      margin-bottom: 1.5rem;
+    }
+    .card-header {
+      background-color: #f8f9fa;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    }
+    
+    /* Info box styling */
+    .info-box {
+      background-color: #e9f7fe;
+      border-left: 4px solid #3498db;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      border-radius: .25rem;
+    }
+    
+    /* Success message */
+    .success-message {
+      background-color: #d4edda;
+      border-left: 4px solid #28a745;
+      color: #155724;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      border-radius: .25rem;
+    }
+    
+    /* Warning styles */
+    .warning-box {
+      background-color: #fff3cd;
+      border-left: 4px solid #ffc107;
+      color: #856404;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      border-radius: .25rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar (same as in other admin pages) -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top py-2">
+    <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+      <img src="{{ url_for('static', filename='RMJ logo.png') }}" alt="RMJ Logo" class="mr-2">
+      <span class="h5 mb-0 d-none d-sm-inline">RMJ Dashboard</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav mr-auto">
+        <!-- Work Orders -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="woDropdown" role="button" data-toggle="dropdown">Work Orders</a>
+          <div class="dropdown-menu" aria-labelledby="woDropdown">
+            <a class="dropdown-item" href="{{ url_for('index') }}">Open</a>
+            <a class="dropdown-item" href="{{ url_for('completed_work_orders') }}">Completed</a>
+            <a class="dropdown-item" href="{{ url_for('closed_work_orders') }}">Closed</a>
+          </div>
+        </li>
+        <!-- Timesheets -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="tsDropdown" role="button" data-toggle="dropdown">Timesheets</a>
+          <div class="dropdown-menu" aria-labelledby="tsDropdown">
+            <a class="dropdown-item" href="{{ url_for('new_timesheet') }}">New Entry</a>
+            <a class="dropdown-item" href="{{ url_for('select_weekly_timesheet') }}">Select Weekly</a>
+            <a class="dropdown-item" href="/workorder/reassign_entries">Reassign Entries</a>
+          </div>
+        </li>
+        <!-- Actions -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="actionsDropdown" role="button" data-toggle="dropdown">Actions</a>
+          <div class="dropdown-menu" aria-labelledby="actionsDropdown">
+            <a class="dropdown-item" href="{{ url_for('new_work_order') }}">Create WO</a>
+            <a class="dropdown-item" href="{{ url_for('import_excel') }}">Import Excel</a>
+            <a class="dropdown-item" href="{{ url_for('export_excel') }}">Export Excel</a>
+          </div>
+        </li>
+        <!-- Admin -->
+        <li class="nav-item dropdown active">
+          <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-toggle="dropdown">Admin</a>
+          <div class="dropdown-menu" aria-labelledby="adminDropdown">
+            <a class="dropdown-item" href="{{ url_for('admin_users') }}">User Mgmt</a>
+            <a class="dropdown-item" href="{{ url_for('admin_import_time_entries') }}">Import Time</a>
+            <a class="dropdown-item" href="{{ url_for('admin_email_settings') }}">Notifications</a>
+            <a class="dropdown-item" href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+            <a class="dropdown-item active" href="{{ url_for('classify_work_orders') }}">Classify Work Orders</a>
+          </div>
+        </li>
+      </ul>
+      <ul class="navbar-nav ml-md-3 mt-2 mt-md-0">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container-fluid mt-4">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="card">
+          <div class="card-header">
+            <h1 class="h3 mb-0">Classify Work Orders</h1>
+          </div>
+          <div class="card-body">
+            {% if message %}
+              <div class="success-message">
+                <i class="fas fa-check-circle mr-2"></i> {{ message }}
+              </div>
+            {% endif %}
+            
+            <div class="info-box mb-4">
+              <h5><i class="fas fa-info-circle mr-2"></i>Classification Rules</h5>
+              <p>This tool will automatically classify your work orders using the following rules:</p>
+              <ul>
+                <li><strong>Billable:</strong> Work orders with a 6-digit customer work order number AND an RMJ Job number</li>
+                <li><strong>Non-Billable:</strong> Work orders with customer work order numbers of "0", "00", "000", or "0000"</li>
+                <li><strong>All other work orders</strong> will be classified as Billable by default</li>
+              </ul>
+              <p class="mb-0"><strong>Note:</strong> Existing "Contract/Project" classifications will not be changed.</p>
+            </div>
+            
+            <div class="warning-box mb-4">
+              <h5><i class="fas fa-exclamation-triangle mr-2"></i>Warning</h5>
+              <p>This action will update the classification field for <strong>all</strong> work orders in the system.</p>
+              <p class="mb-0">This operation cannot be undone automatically. Please ensure you have a database backup before proceeding.</p>
+            </div>
+            
+            <form method="POST" onsubmit="return confirm('Are you sure you want to classify all work orders? This operation cannot be undone.');">
+              <button type="submit" class="btn btn-primary btn-lg">
+                <i class="fas fa-tags mr-2"></i> Run Classification
+              </button>
+              <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

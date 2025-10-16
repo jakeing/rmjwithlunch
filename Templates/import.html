@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Import Work Orders from Excel - RMJ Dashboard</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+  <style>
+    /* Navbar */
+    .navbar { background-color: #ffffff; }
+    .navbar-brand img { height: 40px; }
+    .dropdown-menu { border-radius: .35rem; }
+
+    /* Full-width container */
+    .container-fluid { max-width: 100%; padding: 0 0.5rem; }
+
+    /* Card styling */
+    .card {
+      border-radius: .35rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      margin-bottom: 1.5rem;
+    }
+    .card-header {
+      background-color: #f8f9fa;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    }
+    
+    /* Form styling */
+    .form-control {
+      border-radius: .25rem;
+    }
+    .form-control:focus {
+      border-color: #80bdff;
+      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+    
+    label {
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+      color: #495057;
+    }
+    
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+    
+    /* Button improvements */
+    .btn {
+      border-radius: .25rem;
+      font-weight: 500;
+    }
+    .btn-success {
+      background-color: #28a745;
+      border-color: #28a745;
+    }
+    .btn-success:hover {
+      background-color: #218838;
+      border-color: #1e7e34;
+    }
+    .btn-secondary {
+      background-color: #6c757d;
+      border-color: #6c757d;
+    }
+    .btn-secondary:hover {
+      background-color: #5a6268;
+      border-color: #545b62;
+    }
+    
+    /* Info card */
+    .info-card {
+      background-color: #e9f7fe;
+      border-left: 4px solid #3498db;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      border-radius: .25rem;
+    }
+    
+    .info-card h5 {
+      color: #3498db;
+      margin-bottom: 0.75rem;
+    }
+    
+    .info-card ul {
+      padding-left: 1.5rem;
+      margin-bottom: 0;
+    }
+    
+    .info-card li {
+      margin-bottom: 0.5rem;
+    }
+    
+    /* File upload styling */
+    .custom-file-label {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    
+    .upload-icon {
+      font-size: 3rem;
+      color: #6c757d;
+      margin-bottom: 1rem;
+    }
+    
+    .format-badge {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      margin-right: 0.5rem;
+      margin-bottom: 0.5rem;
+      border-radius: 0.25rem;
+      background-color: #e9ecef;
+      color: #495057;
+      font-size: 0.875rem;
+    }
+    
+    /* Mobile optimizations */
+    @media (max-width: 767px) {
+      .card-body {
+        padding: 1rem;
+      }
+    }
+    
+    /* Table styling for example */
+    .table-example {
+      width: 100%;
+      margin-bottom: 1rem;
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: .25rem;
+    }
+    
+    .table-example th {
+      background-color: #e9ecef;
+      border: 1px solid #dee2e6;
+      padding: 0.5rem;
+      text-align: center;
+      font-size: 0.875rem;
+    }
+    
+    .table-example td {
+      border: 1px solid #dee2e6;
+      padding: 0.5rem;
+      text-align: center;
+      font-size: 0.875rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar with multi-tenancy support -->
+  {% include 'navbar.html' %}
+
+  <div class="container mt-4">
+    <div class="row">
+      <div class="col-lg-8 mx-auto">
+        <!-- Main content card -->
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-file-import mr-2"></i>Import Work Orders from Excel</h5>
+          </div>
+          
+          <div class="card-body">
+            <div class="text-center mb-4">
+              <i class="fas fa-file-excel upload-icon"></i>
+              <h4>Upload Excel File</h4>
+              <p class="text-muted">Select an Excel file containing work orders to import into the system.</p>
+              <div class="mt-2">
+                <span class="format-badge"><i class="fas fa-check-circle text-success mr-1"></i>.xlsx</span>
+                <span class="format-badge"><i class="fas fa-check-circle text-success mr-1"></i>.xls</span>
+              </div>
+            </div>
+            
+            <!-- Format information card -->
+            <div class="info-card mb-4">
+              <h5><i class="fas fa-info-circle mr-2"></i>Required Excel Format</h5>
+              <p>Your Excel file should have the following columns:</p>
+              <ul>
+                <li><strong>customer_work_order_number</strong> - External reference number from customer</li>
+                <li><strong>rmj_job_number</strong> - Unique internal job number (required)</li>
+                <li><strong>description</strong> - Brief description of the work (required)</li>
+                <li><strong>status</strong> - Status of the work order (Open, Complete, Closed)</li>
+                <li><strong>owner</strong> - Customer or individual who owns this work order</li>
+                <li><strong>estimated_hours</strong> - Estimated time to complete the work</li>
+                <li><strong>priority</strong> - Priority level (Low, Medium, High)</li>
+                <li><strong>location</strong> - Location where work will be performed</li>
+                <li><strong>scheduled_date</strong> - Date work is scheduled (YYYY-MM-DD format)</li>
+              </ul>
+              
+              <div class="mt-3">
+                <h6>Example Format:</h6>
+                <div class="table-responsive">
+                  <table class="table-example">
+                    <thead>
+                      <tr>
+                        <th>customer_work_order_number</th>
+                        <th>rmj_job_number</th>
+                        <th>description</th>
+                        <th>status</th>
+                        <th>owner</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>CWO-12345</td>
+                        <td>RMJ-001</td>
+                        <td>Install new equipment</td>
+                        <td>Open</td>
+                        <td>ACME Corp</td>
+                      </tr>
+                      <tr>
+                        <td>CWO-12346</td>
+                        <td>RMJ-002</td>
+                        <td>Maintenance service</td>
+                        <td>Open</td>
+                        <td>XYZ Inc</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Upload form -->
+            <form method="POST" enctype="multipart/form-data">
+              <div class="form-group">
+                <div class="custom-file">
+                  <input type="file" name="file" class="custom-file-input" id="customFile" accept=".xlsx, .xls" required>
+                  <label class="custom-file-label" for="customFile">Choose Excel file...</label>
+                </div>
+                <small class="form-text text-muted">Maximum file size: 10MB</small>
+              </div>
+              
+              <div class="d-flex justify-content-between mt-4">
+                <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                  <i class="fas fa-arrow-left mr-1"></i> Back to Dashboard
+                </a>
+                <button type="submit" class="btn btn-success">
+                  <i class="fas fa-upload mr-1"></i> Import Work Orders
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+        <!-- Help & Tips Card -->
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-question-circle mr-2"></i>Help & Tips</h5>
+          </div>
+          <div class="card-body">
+            <ul class="list-unstyled">
+              <li class="mb-2">
+                <i class="fas fa-check-circle text-success mr-2"></i>
+                <strong>Unique Job Numbers:</strong> Ensure each RMJ job number is unique. Duplicate job numbers will not be imported.
+              </li>
+              <li class="mb-2">
+                <i class="fas fa-check-circle text-success mr-2"></i>
+                <strong>Required Fields:</strong> At minimum, include rmj_job_number and description for each work order.
+              </li>
+              <li class="mb-2">
+                <i class="fas fa-check-circle text-success mr-2"></i>
+                <strong>Date Format:</strong> Use YYYY-MM-DD format for scheduled dates. Example: 2025-05-07.
+              </li>
+              <li>
+                <i class="fas fa-check-circle text-success mr-2"></i>
+                <strong>Need a Template?</strong> <a href="#">Download a sample Excel template</a> to get started.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Update file input label with selected filename
+    $('.custom-file-input').on('change', function() {
+      var fileName = $(this).val().split('\\').pop();
+      $(this).next('.custom-file-label').html(fileName);
+    });
+  </script>
+</body>
+</html>

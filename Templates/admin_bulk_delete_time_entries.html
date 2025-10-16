@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+<head>
+  <title>Admin - Bulk Delete Time Entries</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    .select-all-container {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container mt-5">
+    <h1>Bulk Delete Time Entries</h1>
+    {% if message %}
+      <div class="alert alert-info">{{ message }}</div>
+    {% endif %}
+    <form method="POST" action="{{ url_for('bulk_delete_time_entries') }}">
+      <div class="select-all-container">
+        <input type="checkbox" id="select-all"> <label for="select-all">Select All</label>
+      </div>
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Select</th>
+            <th>ID</th>
+            <th>Engineer</th>
+            <th>Work Date</th>
+            <th>Time In</th>
+            <th>Time Out</th>
+            <th>Hours Worked</th>
+            <th>Description</th>
+            <th>Logged At</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in time_entries %}
+          <tr>
+            <td><input type="checkbox" class="entry-checkbox" name="time_entry_ids" value="{{ entry.id }}"></td>
+            <td>{{ entry.id }}</td>
+            <td>{{ entry.engineer }}</td>
+            <td>{{ entry.work_date.strftime('%Y-%m-%d') }}</td>
+            <td>{{ entry.time_in.strftime('%H:%M') }}</td>
+            <td>{{ entry.time_out.strftime('%H:%M') }}</td>
+            <td>{{ entry.hours_worked }}</td>
+            <td>{{ entry.description }}</td>
+            <td>{{ entry.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete the selected time entries?');">Delete Selected</button>
+    </form>
+    <br>
+    <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">Back to Admin Dashboard</a>
+  </div>
+  
+  <!-- Include jQuery for Select All functionality -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(document).ready(function(){
+      $('#select-all').click(function(){
+        $('.entry-checkbox').prop('checked', this.checked);
+      });
+    });
+  </script>
+</body>
+</html>

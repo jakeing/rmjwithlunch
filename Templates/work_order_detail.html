@@ -1,0 +1,2021 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>{{ work_order.rmj_job_number }} - Work Order Detail - RMJ Dashboard</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+  <style>
+    /* Navbar */
+    .navbar { background-color: #ffffff; }
+    .navbar-brand img { height: 40px; }
+    .dropdown-menu { border-radius: .35rem; }
+
+    /* Full-width container */
+    .container-fluid { max-width: 100%; padding: 0 0.5rem; }
+
+    /* Card styling */
+    .card {
+      border-radius: .35rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      margin-bottom: 1.5rem;
+    }
+    .card-header {
+      background-color: #f8f9fa;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    }
+    
+    /* Table styling */
+    .table-responsive { overflow-x: auto; }
+    .table { width: 100%; table-layout: auto; }
+    .table-hover tbody tr:hover { 
+      background-color: #f8f9fa;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      transition: all 0.2s ease;
+    }
+    .table thead th {
+      font-size: .85rem;
+      vertical-align: middle;
+      text-align: center;
+      white-space: nowrap;
+      padding: .5rem .75rem;
+      position: sticky;
+      top: 0;
+      background-color: #f8f9fa;
+      z-index: 1;
+      border-top: none;
+      font-weight: 600;
+      color: #495057;
+      border-bottom: 2px solid #dee2e6;
+    }
+    .table tbody td {
+      vertical-align: middle;
+      padding: .65rem .75rem;
+      font-size: .9rem;
+      border-top: 1px solid #f0f0f0;
+    }
+
+    /* Form styling */
+    .form-row {
+      margin-right: -5px;
+      margin-left: -5px;
+    }
+    .form-row > .col,
+    .form-row > [class*="col-"] {
+      padding-right: 5px;
+      padding-left: 5px;
+    }
+    
+    /* Button improvements */
+    .btn-group-sm > .btn, .btn-sm {
+      padding: 0.3rem 0.5rem;
+      font-size: 0.875rem;
+      border-radius: .2rem;
+    }
+    
+    /* Document list styling */
+    .document-list {
+      list-style: none;
+      padding-left: 0;
+    }
+    .document-list li {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .document-list li:last-child {
+      border-bottom: none;
+    }
+    
+    /* Sticky header for mobile */
+    .sticky-top {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    
+    /* Mobile-specific styles */
+    @media (max-width: 767px) {
+      .mobile-p-0 { padding: 0 !important; }
+      .mobile-p-1 { padding: 0.25rem !important; }
+      
+      /* Improved touch targets */
+      .btn-sm {
+        padding: 0.3rem 0.4rem;
+        font-size: 0.875rem;
+      }
+      
+      /* Fix navbar on mobile */
+      .navbar-collapse {
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+      
+      /* Better form layout on mobile */
+      .form-row > .col, 
+      .form-row > [class*="col-"] {
+        padding-right: 5px;
+        padding-left: 5px;
+        margin-bottom: 0.5rem;
+      }
+    }
+    
+    /* Add mobile scroll hint */
+    .scroll-hint {
+      display: none;
+      text-align: center;
+      padding: 0.5rem;
+      color: #666;
+      font-style: italic;
+    }
+    
+    @media (max-width: 767px) {
+      .scroll-hint {
+        display: block;
+      }
+    }
+    
+    /* Field styling */
+    .field-label {
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 0.25rem;
+      color: #495057;
+    }
+    .field-value {
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+    }
+    
+    /* Status indicators */
+    .status-badge {
+      display: inline-block;
+      padding: 0.35em 0.65em;
+      border-radius: 0.25rem;
+      font-size: 0.875em;
+      font-weight: 600;
+    }
+    .status-Open {
+      background-color: #cff4fc;
+      color: #055160;
+    }
+    .status-Closed {
+      background-color: #f8d7da;
+      color: #842029;
+    }
+    .status-Complete {
+      background-color: #d1e7dd;
+      color: #0f5132;
+    }
+    
+    /* Tab styling for sections */
+    .nav-tabs {
+      border-bottom: 1px solid #dee2e6;
+      margin-bottom: 1rem;
+    }
+    .nav-tabs .nav-link {
+      border: 1px solid transparent;
+      border-top-left-radius: 0.25rem;
+      border-top-right-radius: 0.25rem;
+      font-size: 0.95rem;
+      padding: 0.5rem 0.75rem;
+    }
+    .nav-tabs .nav-link.active {
+      color: #495057;
+      background-color: #fff;
+      border-color: #dee2e6 #dee2e6 #fff;
+      font-weight: 600;
+    }
+    
+    /* Save confirmation message */
+    .save-confirmation {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background-color: #28a745;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 4px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      z-index: 1050;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .save-confirmation.show {
+      opacity: 1;
+    }
+    
+    /* Document approval styling */
+    .approval-status {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .status-approved {
+      background-color: #d1e7dd;
+      color: #0f5132;
+    }
+
+    .status-pending {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+    
+    /* Enhanced checkbox styling */
+    .custom-checkbox .custom-control-input:checked ~ .custom-control-label::before {
+      background-color: #28a745;
+      border-color: #28a745;
+    }
+    
+    /* Classification badge styling */
+    .badge-custom {
+      padding: 0.4rem 0.6rem;
+      border-radius: 50rem;
+      font-weight: 600;
+      font-size: 0.75rem;
+    }
+    
+    .badge-info-light {
+      background-color: #e1f5fe;
+      color: #0288d1;
+    }
+    
+    .badge-success-light {
+      background-color: #e8f5e9;
+      color: #388e3c;
+    }
+    
+    .badge-billable {
+      background-color: #e8f5e9;
+      color: #28a745;
+    }
+
+    .badge-non-billable {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+
+    .badge-contract-project {
+      background-color: #e1f5fe;
+      color: #0288d1;
+    }
+    
+    /* Work Order header card */
+    .date-range-card {
+      background-color: #ffffff;
+      border-radius: .35rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    
+    /* Summary card styles */
+    .summary-card {
+      background-color: #f8f9fa;
+      border-radius: .35rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .summary-header {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #495057;
+      border-bottom: 1px solid #dee2e6;
+      padding-bottom: 0.5rem;
+    }
+    
+    /* Quick Action Links */
+    .quick-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .quick-actions .btn {
+      flex: 1;
+      text-align: center;
+      padding: 0.75rem 0.5rem;
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 0.35rem;
+      color: #495057;
+      transition: all 0.2s ease;
+    }
+    
+    .quick-actions .btn:hover {
+      background-color: #e9ecef;
+      color: #212529;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .quick-actions .btn i {
+      display: block;
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    /* Engineer tag style */
+    .engineer-tag {
+      display: inline-block;
+      background-color: #e9ecef;
+      color: #495057;
+      padding: 0.35rem 0.7rem;
+      border-radius: 50rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+    
+    /* Work Order Stats card */
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .stat-item:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+    
+    .stat-label {
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+    
+    .stat-value {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    
+    /* Day indicator styles */
+    .day-indicator {
+      display: inline-block;
+      min-width: 40px;
+      height: 24px;
+      line-height: 24px;
+      border-radius: 12px;
+      text-align: center;
+      margin-right: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0 5px;
+    }
+    
+    .weekday {
+      background-color: #e9ecef;
+      color: #495057;
+    }
+    
+    .weekend {
+      background-color: #ffddc7;
+      color: #fd7e14;
+    }
+    
+    /* Time entry editing UI */
+    .time-inline-actions {
+      white-space: nowrap;
+    }
+    
+    .editable-row .view-mode .editable-value {
+      cursor: pointer;
+      border-bottom: 1px dashed #dee2e6;
+    }
+    
+    .editable-row .view-mode .editable-value:hover {
+      background-color: #f8f9fa;
+    }
+    
+    .editable-row.editing .view-mode {
+      display: none;
+    }
+    
+    .editable-row.editing .edit-mode {
+      display: table-row;
+    }
+    
+    .editable-row .edit-mode input,
+    .editable-row .edit-mode select {
+      width: 100%;
+      padding: 0.25rem;
+      font-size: 0.9rem;
+    }
+    
+    .edit-mode {
+      display: none;
+    }
+    
+    /* Time adjustment styling */
+    .time-adjustment-row {
+      background-color: #fff3cd !important;
+      border-left: 4px solid #ffc107;
+    }
+    
+    .time-adjustment-row:hover {
+      background-color: #ffeaa7 !important;
+    }
+    
+    .time-adjustment-badge {
+      background-color: #ffc107;
+      color: #212529;
+      font-weight: 600;
+      font-size: 0.75rem;
+      padding: 0.25em 0.5em;
+      border-radius: 0.25rem;
+    }
+    
+    .hours-negative {
+      color: #dc3545;
+      font-weight: 600;
+    }
+    
+    .hours-positive {
+      color: #28a745;
+      font-weight: 600;
+    }
+    
+    /* Custom checkboxes with animation */
+    .custom-checkbox-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 32px;
+    }
+    
+    .custom-checkbox {
+      position: relative;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+    }
+    
+    .custom-checkbox input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+    }
+    
+    .checkmark {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 24px;
+      width: 24px;
+      background-color: #eee;
+      border-radius: 4px;
+      transition: all 0.3s ease;
+      border: 1px solid #dee2e6;
+    }
+    
+    .custom-checkbox:hover input ~ .checkmark {
+      background-color: #ccc;
+    }
+    
+    .custom-checkbox input:checked ~ .checkmark {
+      background-color: #28a745;
+      border-color: #28a745;
+    }
+    
+    .checkmark:after {
+      content: "";
+      position: absolute;
+      display: none;
+      left: 9px;
+      top: 5px;
+      width: 6px;
+      height: 12px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+      transition: all 0.2s ease;
+    }
+    
+    .custom-checkbox input:checked ~ .checkmark:after {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Include the existing navigation bar -->
+  {% include 'navbar.html' %}
+
+  <!-- Save Confirmation Toast -->
+  <div id="saveConfirmation" class="save-confirmation">
+    <i class="fas fa-check-circle mr-2"></i> <span id="saveConfirmationText">Changes saved successfully!</span>
+  </div>
+
+  <div class="container-fluid mt-3">
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle mr-2"></i>{{ message }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    
+    <!-- Work Order Header Card -->
+
+  <div class="container-fluid mt-3">
+    <!-- Work Order Header Card -->
+    <div class="date-range-card">
+      <div>
+        <h1 class="h3 mb-0">Work Order: {{ work_order.rmj_job_number }}</h1>
+        <div class="d-flex align-items-center mt-1">
+          <span class="badge badge-custom badge-{{ work_order.classification|lower|replace('/', '-') }} mr-2">
+            {{ work_order.classification }}
+          </span>
+          <span class="status-badge status-{{ work_order.status }} mr-2">{{ work_order.status }}</span>
+          {% if work_order.customer_work_order_number %}
+          <span class="badge badge-custom badge-info-light">Cust #: {{ work_order.customer_work_order_number }}</span>
+          {% endif %}
+        </div>
+      </div>
+      <div>
+        <button type="button" class="btn btn-primary" id="edit-mode-btn">
+          <i class="fas fa-edit mr-1"></i> Edit Details
+        </button>
+      </div>
+    </div>
+    
+    <div class="row">
+      <div class="col-lg-8">
+        <!-- Work Order Details Card -->
+        <div class="card mb-4">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Work Order Details</h5>
+            <div class="d-flex align-items-center">
+              <span class="badge badge-secondary mr-2">ID: {{ work_order.id }}</span>
+              <button type="button" class="btn btn-sm btn-primary" id="edit-mode-btn-header">
+                <i class="fas fa-edit mr-1"></i> Edit Details
+              </button>
+            </div>
+          </div>
+          
+          <!-- View Mode -->
+          <div class="card-body" id="view-mode">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <div class="field-label">Customer Work Order Number</div>
+                  <div class="field-value" id="view-customer-work-order-number">{{ work_order.customer_work_order_number }}</div>
+                </div>
+                <div class="mb-3">
+                  <div class="field-label">RMJ Job Number</div>
+                  <div class="field-value" id="view-rmj-job-number">{{ work_order.rmj_job_number }}</div>
+                </div>
+                <div class="mb-3">
+                  <div class="field-label">Status</div>
+                  <div class="field-value" id="view-status">
+                    <span class="status-badge status-{{ work_order.status }}">{{ work_order.status }}</span>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <div class="field-label">Owner</div>
+                  <div class="field-value" id="view-owner">{{ work_order.owner }}</div>
+                </div>
+                <div class="mb-3">
+                  <div class="field-label">Requested By</div>
+                  <div class="field-value" id="view-requested-by">{{ work_order.requested_by }}</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <div class="field-label">Estimated Hours</div>
+                  <div class="field-value" id="view-estimated-hours">{{ work_order.estimated_hours }}</div>
+                </div>
+                <div class="mb-3">
+                  <div class="field-label">Hours Logged</div>
+                  <div class="field-value">{{ work_order.hours_logged | round(2) }}</div>
+                </div>
+                <div class="mb-3">
+                  <div class="field-label">Hours Remaining</div>
+                  <div class="field-value{% if work_order.hours_remaining < 0 %} text-danger{% endif %}">{{ work_order.hours_remaining | round(2) }}</div>
+                </div>
+                <div class="mb-3">
+                  <div class="field-label">Priority</div>
+                  <div class="field-value" id="view-priority">{{ work_order.priority }}</div>
+                </div>
+                <div class="mb-3">
+                  <div class="field-label">Classification</div>
+                  <div class="field-value" id="view-classification">{{ work_order.classification }}</div>
+                </div>
+                <div class="mb-3">
+                  <div class="field-label">Approved for Work</div>
+                  <div class="field-value" id="view-approved-for-work">
+                    {% if work_order.approved_for_work %}
+                      <span class="badge badge-success">
+                        <i class="fas fa-check-circle mr-1"></i> Approved
+                      </span>
+                    {% else %}
+                      <span class="badge badge-warning">
+                        <i class="fas fa-clock mr-1"></i> Pending Approval
+                      </span>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <div class="field-label">Location</div>
+                  <div class="field-value" id="view-location">{{ work_order.location }}</div>
+                </div>
+                <div class="mb-3">
+                  <div class="field-label">Scheduled Date</div>
+                  <div class="field-value" id="view-scheduled-date">{{ work_order.scheduled_date.strftime('%Y-%m-%d') if work_order.scheduled_date else 'Not scheduled' }}</div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-12">
+                <div class="mb-3">
+                  <div class="field-label">Description</div>
+                  <div class="field-value" id="view-description">{{ work_order.description }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Edit Mode Form -->
+          <div class="card-body" id="edit-mode" style="display: none;">
+            <form id="edit-form" action="{{ url_for('edit_work_order', work_order_id=work_order.id) }}" method="POST">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Customer Work Order Number:</label>
+                    <input type="text" name="customer_work_order_number" class="form-control" value="{{ work_order.customer_work_order_number }}" required>
+                  </div>
+                  <div class="form-group">
+                    <label>RMJ Job Number:</label>
+                    <input type="text" name="rmj_job_number" class="form-control" value="{{ work_order.rmj_job_number }}" required>
+                  </div>
+                  <div class="form-group">
+                    <label>Status:</label>
+                    <select name="status" class="form-control">
+                      <option value="Open" {% if work_order.status=='Open' %}selected{% endif %}>Open</option>
+                      <option value="Closed" {% if work_order.status=='Closed' %}selected{% endif %}>Closed</option>
+                      <option value="Complete" {% if work_order.status=='Complete' %}selected{% endif %}>Complete</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Owner:</label>
+                    <input type="text" name="owner" class="form-control" value="{{ work_order.owner }}">
+                  </div>
+                  <div class="form-group">
+                    <label>Requested By:</label>
+                    <input type="text" name="requested_by" class="form-control" value="{{ work_order.requested_by }}">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Estimated Hours:</label>
+                    <input type="number" step="0.1" name="estimated_hours" class="form-control" value="{{ work_order.estimated_hours }}" required>
+                  </div>
+                  <div class="form-group">
+                    <label>Priority:</label>
+                    <select name="priority" class="form-control" required>
+                      <option value="Low" {% if work_order.priority=='Low' %}selected{% endif %}>Low</option>
+                      <option value="Medium" {% if work_order.priority=='Medium' %}selected{% endif %}>Medium</option>
+                      <option value="High" {% if work_order.priority=='High' %}selected{% endif %}>High</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Classification:</label>
+                    <select name="classification" class="form-control" required>
+                      <option value="Contract/Project" {% if work_order.classification=='Contract/Project' %}selected{% endif %}>Contract/Project</option>
+                      <option value="Billable" {% if work_order.classification=='Billable' %}selected{% endif %}>Billable</option>
+                      <option value="Non-Billable" {% if work_order.classification=='Non-Billable' %}selected{% endif %}>Non-Billable</option>
+                    </select>
+                  </div>
+                  {% if session.get('user_id') and (User.query.get(session.get('user_id')).role.lower() == 'admin' or User.query.get(session.get('user_id')).username.lower() == 'admin') %}
+                  <div class="form-group">
+                    <label>Approved for Work:</label>
+                    <div class="form-check">
+                      <input type="checkbox" name="approved_for_work" class="form-check-input" value="1" 
+                            {% if work_order.approved_for_work %}checked{% endif %}>
+                      <label class="form-check-label">
+                        Work order is approved to begin
+                      </label>
+                    </div>
+                  </div>
+                  {% endif %}
+                  <div class="form-group">
+                    <label>Location:</label>
+                    <input type="text" name="location" class="form-control" value="{{ work_order.location }}">
+                  </div>
+                  <div class="form-group">
+                    <label>Scheduled Date:</label>
+                    <input type="date" name="scheduled_date" class="form-control" value="{{ work_order.scheduled_date.strftime('%Y-%m-%d') if work_order.scheduled_date else '' }}">
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-12">
+                  <div class="form-group">
+                    <label>Description:</label>
+                    <textarea name="description" class="form-control" rows="3">{{ work_order.description }}</textarea>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <button type="submit" class="btn btn-success">Save Changes</button>
+                <button type="button" class="btn btn-secondary" id="cancel-edit-btn">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+        <!-- Quick Actions for small screens only -->
+        <div class="d-block d-lg-none mb-4">
+          <div class="quick-actions">
+            <a href="{{ url_for('upload_document', work_order_id=work_order.id) }}" class="btn">
+              <i class="fas fa-upload"></i>
+              Upload Document
+            </a>
+            <a href="{{ url_for('download_report_template', work_order_id=work_order.id) }}" class="btn">
+              <i class="fas fa-file-download"></i>
+              Report Template
+            </a>
+            <a href="{{ url_for('index') }}" class="btn">
+              <i class="fas fa-folder-open"></i>
+              Open WOs
+            </a>
+          </div>
+        </div>
+        
+        <!-- Tabs for Time Entries and Documents -->
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+          <li class="nav-item" role="presentation">
+            <a class="nav-link active" id="time-tab" data-toggle="tab" href="#time" role="tab" aria-controls="time" aria-selected="true">Time Entries</a>
+          </li>
+          <li class="nav-item" role="presentation">
+            <a class="nav-link" id="documents-tab" data-toggle="tab" href="#documents" role="tab" aria-controls="documents" aria-selected="false">Documents</a>
+          </li>
+          {% if work_order.classification == "Contract/Project" %}
+          <li class="nav-item" role="presentation">
+            <a class="nav-link" id="project-tab" data-toggle="tab" href="#project" role="tab" aria-controls="project" aria-selected="false">Project</a>
+          </li>
+          {% endif %}
+        </ul>
+        
+        <div class="tab-content" id="myTabContent">
+          <!-- Time Entries Tab -->
+          <div class="tab-pane fade show active" id="time" role="tabpanel" aria-labelledby="time-tab">
+            <div class="card">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Time Entries</h5>
+                <div class="d-flex align-items-center">
+                  <span class="badge badge-custom badge-success-light mr-2">
+                    {{ work_order.time_entries|length }} Entries
+                  </span>
+                  <span class="badge badge-custom badge-info-light mr-2">
+                    {{ work_order.hours_logged | round(1) }} Hours
+                  </span>
+                  <a href="{{ url_for('export_time_entries_for_work_order', work_order_id=work_order.id) }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-file-export mr-1"></i> Export
+                  </a>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="card mt-4">
+                  <div class="card-header">
+                    <h5 class="mb-0">Add Time Entry</h5>
+                  </div>
+                  <div class="card-body">
+                    {% if work_order.status in ["Closed", "Complete"] %}
+                      <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle mr-2"></i> Cannot add time entries to a work order that is Closed or Complete.
+                      </div>
+                    {% else %}
+                      <form action="{{ url_for('add_time_inline', work_order_id=work_order.id) }}" method="POST" class="mb-4">
+                        <div class="form-row">
+                          <div class="form-group col-md-3">
+                            <label for="engineer_user">Engineer:</label>
+                            <select name="engineer_user" id="engineer_user" class="form-control" required>
+                              <option value="">-- Select Engineer --</option>
+                              {% for user in users %}
+                                <option value="{{ user.id }}" 
+                                        {% if user.full_name == default_engineer or user.username == session.get('user_id')|string %}selected{% endif %}>
+                                  {{ user.full_name or user.username }}
+                                </option>
+                              {% endfor %}
+                            </select>
+                            <!-- Hidden fallback field for backwards compatibility -->
+                            <input type="hidden" name="engineer" value="{{ default_engineer }}">
+                          </div>
+                          <div class="form-group col-md-2">
+                            <label for="work_date">Date:</label>
+                            <input type="date" name="work_date" class="form-control" value="{{ today_date }}" required>
+                          </div>
+                          <div class="form-group col-md-2">
+                            <label for="time_in">Time In:</label>
+                            <input type="time" name="time_in" class="form-control" value="07:00" required>
+                          </div>
+                          <div class="form-group col-md-2">
+                            <label for="time_out">Time Out:</label>
+                            <input type="time" name="time_out" class="form-control" value="15:30" required>
+                          </div>
+                          <div class="form-group col-md-6">
+                            <label for="description">Description:</label>
+                            <input type="text" name="description" class="form-control" placeholder="What did you do?">
+                          </div>
+                          </div>
+                          <div class="form-row">
+                          <div class="form-group col-md-2">
+                            <div class="custom-control custom-checkbox">
+                              <input type="checkbox" class="custom-control-input" id="had_lunch" name="had_lunch">
+                              <label class="custom-control-label" for="had_lunch">Had Lunch?</label>
+                            </div>
+                          </div>
+                            <div class="form-group col-md-2" id="lunch_times" style="display: none;">
+                            <label for="lunch_start">Start:</label>
+                            <input type="time" name="lunch_start" id="lunch_start" class="form-control">
+                          </div>
+                          <div class="form-group col-md-2" id="lunch_end_group" style="display: none;">
+                            <label for="lunch_end">End:</label>
+                            <input type="time" name="lunch_end" id="lunch_end" class="form-control">
+                          </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary mt-3">
+                          <i class="fas fa-plus-circle mr-1"></i> Add Time Entry
+                        </button>
+                        </form>
+                    {% endif %}
+                  </div>
+                </div>
+                
+                <!-- Admin Only Time Adjustment Card -->
+                {% if session.get('user_id') and (User.query.get(session.get('user_id')).role.lower() == 'admin' or User.query.get(session.get('user_id')).username.lower() == 'admin') %}
+                <div class="card mt-4 border-warning">
+                  <div class="card-header bg-warning">
+                    <h5 class="mb-0 text-dark">
+                      <i class="fas fa-tools mr-2"></i>Time Adjustment (Admin Only)
+                    </h5>
+                  </div>
+                  <div class="card-body">
+                    <div class="alert alert-info">
+                      <i class="fas fa-info-circle mr-2"></i>
+                      <strong>Admin Tool:</strong> Use this to add positive or negative time adjustments. 
+                      Enter positive numbers to add time, negative numbers to subtract time.
+                    </div>
+                    <form action="{{ url_for('add_time_adjustment', work_order_id=work_order.id) }}" method="POST" class="mb-4">
+                      <div class="form-row">
+                        <div class="form-group col-md-3">
+                          <label for="adjustment_work_date">Date:</label>
+                          <input type="date" name="adjustment_work_date" class="form-control" value="{{ today_date }}" required>
+                        </div>
+                        <div class="form-group col-md-3">
+                          <label for="hours_adjustment">Hours Adjustment:</label>
+                          <input type="number" step="0.1" name="hours_adjustment" class="form-control" 
+                                 placeholder="e.g. 2.5 or -1.5" required>
+                          <small class="form-text text-muted">
+                            Use positive numbers to add time, negative to subtract
+                          </small>
+                        </div>
+                        <div class="form-group col-md-6">
+                          <label for="adjustment_description">Reason/Description:</label>
+                          <input type="text" name="adjustment_description" class="form-control" 
+                                 placeholder="Reason for time adjustment" required>
+                        </div>
+                      </div>
+                      <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-balance-scale mr-1"></i> Apply Time Adjustment
+                      </button>
+                    </form>
+                  </div>
+                </div>
+                {% endif %}
+
+                <div class="scroll-hint">Scroll horizontally to see all columns →</div>
+                <!-- Time Entries Table Section -->
+                <div class="table-responsive">
+                  <table class="table table-hover table-striped">
+                    <thead>
+                      <tr>
+                        <th class="text-center">#</th>
+                        <th>Engineer</th>
+                        <th class="text-center">Date</th>
+                        <th class="text-center">Time In</th>
+                        <th class="text-center">Time Out</th>
+                        <th class="text-center">Hours</th>
+                        <th class="text-center">Lunch</th>
+                        <th>Description</th>
+                        <th class="text-center">JL/JT Status</th>
+                        <th class="text-center">Logged At</th>
+                        <th class="text-center">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="time-entries-table">
+                      {% for entry in work_order.time_entries %}
+                        <!-- Check if entry is locked -->
+                        {% set is_locked = entry.entered_on_jl or entry.entered_on_jt %}
+                        <!-- Check if entry is a time adjustment -->
+                        {% set is_adjustment = entry.engineer == 'timeadj' %}
+                        <!-- Check if current user is admin -->
+                        {% set is_admin = session.get('user_id') and (User.query.get(session.get('user_id')).role.lower() == 'admin' or User.query.get(session.get('user_id')).username.lower() == 'admin') %}
+                        
+                        <!-- Only show time adjustment entries to admin users -->
+                        {% if not is_adjustment or is_admin %}
+                        
+                        <!-- View Mode Row -->
+                        <tr class="editable-row {{ 'table-warning' if is_locked else '' }} {{ 'time-adjustment-row' if is_adjustment else '' }}" data-entry-id="{{ entry.id }}">
+                          <td class="text-center">
+                            {{ entry.id }}
+                            {% if is_locked %}
+                              <i class="fas fa-lock text-warning ml-1" title="Entry locked - entered in accounting system"></i>
+                            {% endif %}
+                            {% if is_adjustment %}
+                              <br><span class="time-adjustment-badge">ADJ</span>
+                            {% endif %}
+                          </td>
+                          <td>
+                            {% if is_adjustment %}
+                              <span class="time-adjustment-badge">Time Adjustment</span>
+                            {% else %}
+                              <span class="engineer-tag editable-value {{ 'text-muted' if is_locked else '' }}" 
+                                    data-field="engineer" 
+                                    {{ 'style="cursor: not-allowed;"' if is_locked else '' }}>
+                                {{ entry.engineer }}
+                              </span>
+                            {% endif %}
+                          </td>
+                          <td class="text-center">
+                            {% set day_of_week = entry.work_date.strftime('%a') %}
+                            {% set is_weekend = day_of_week in ['Sat', 'Sun'] %}
+                            <div>
+                              <span class="day-indicator {{ 'weekend' if is_weekend else 'weekday' }}">
+                                {{ day_of_week[:3] }}
+                              </span>
+                              <span class="editable-value {{ 'text-muted' if is_locked else '' }}" 
+                                    data-field="work_date"
+                                    {{ 'style="cursor: not-allowed;"' if (is_locked or is_adjustment) else '' }}>
+                                {{ entry.work_date.strftime('%Y-%m-%d') }}
+                              </span>
+                            </div>
+                          </td>
+                          <td class="text-center">
+                            {% if is_adjustment %}
+                              <span class="text-muted">—</span>
+                            {% else %}
+                              <span class="editable-value {{ 'text-muted' if is_locked else '' }}" 
+                                    data-field="time_in"
+                                    {{ 'style="cursor: not-allowed;"' if is_locked else '' }}>
+                                {{ entry.time_in.strftime('%H:%M') }}
+                              </span>
+                            {% endif %}
+                          </td>
+                          <td class="text-center">
+                            {% if is_adjustment %}
+                              <span class="text-muted">—</span>
+                            {% else %}
+                              <span class="editable-value {{ 'text-muted' if is_locked else '' }}" 
+                                    data-field="time_out"
+                                    {{ 'style="cursor: not-allowed;"' if is_locked else '' }}>
+                                {{ entry.time_out.strftime('%H:%M') }}
+                              </span>
+                            {% endif %}
+                          </td>
+                          <td class="text-center">
+                            {% if entry.hours_worked < 0 %}
+                              <span class="hours-negative font-weight-bold">{{ entry.hours_worked | round(2) }}</span>
+                            {% elif entry.hours_worked > 0 and is_adjustment %}
+                              <span class="hours-positive font-weight-bold">+{{ entry.hours_worked | round(2) }}</span>
+                            {% else %}
+                              <span class="font-weight-bold">{{ entry.hours_worked | round(2) }}</span>
+                            {% endif %}
+                          </td>
+                          <td class="text-center">
+                            {% if is_adjustment %}
+                              <span class="text-muted">—</span>
+                            {% elif entry.lunch_start and entry.lunch_end %}
+                              <div class="small">
+                                <i class="fas fa-utensils text-warning"></i>
+                                {{ entry.lunch_start.strftime('%H:%M') }} - {{ entry.lunch_end.strftime('%H:%M') }}
+                                {% if entry.lunch_deduction > 0 %}
+                                  <br><span class="badge badge-warning badge-sm">-{{ (entry.lunch_deduction * 60) | round(0) | int }}m</span>
+                                {% endif %}
+                              </div>
+                            {% else %}
+                              <span class="text-muted">—</span>
+                            {% endif %}
+                          </td>
+                          <td>
+                            <span class="editable-value {{ 'text-muted' if is_locked else '' }}" 
+                                  data-field="description"
+                                  {{ 'style="cursor: not-allowed;"' if (is_locked or is_adjustment) else '' }}>
+                              {{ entry.description }}
+                            </span>
+                          </td>
+                          <td class="text-center">
+                            {% if is_adjustment %}
+                              <span class="text-muted">N/A</span>
+                            {% else %}
+                              <div class="d-flex justify-content-center align-items-center">
+                                <!-- JL Checkbox -->
+                                <div class="custom-checkbox-container mr-2">
+                                  <label class="custom-checkbox" title="Job Log">
+                                    <input type="checkbox" 
+                                          class="jl-checkbox" 
+                                          data-entry-id="{{ entry.id }}" 
+                                          data-type="jl"
+                                          {{ 'checked' if entry.entered_on_jl else '' }}>
+                                    <span class="checkmark"></span>
+                                  </label>
+                                  <small class="d-block text-center mt-1">JL</small>
+                                </div>
+                                
+                                <!-- JT Checkbox -->
+                                <div class="custom-checkbox-container">
+                                  <label class="custom-checkbox" title="Job Time">
+                                    <input type="checkbox" 
+                                          class="jt-checkbox" 
+                                          data-entry-id="{{ entry.id }}" 
+                                          data-type="jt"
+                                          {{ 'checked' if entry.entered_on_jt else '' }}>
+                                    <span class="checkmark"></span>
+                                  </label>
+                                  <small class="d-block text-center mt-1">JT</small>
+                                </div>
+                              </div>
+                            {% endif %}
+                          </td>
+                          <td class="text-center">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                          <td class="text-center time-inline-actions">
+                            {% if is_adjustment %}
+                              <!-- Time adjustment entries - special handling -->
+                              <div class="btn-group btn-group-sm">
+                                {% if is_admin %}
+                                  <form action="{{ url_for('delete_time_entry', time_entry_id=entry.id) }}" 
+                                        method="POST" 
+                                        style="display:inline;" 
+                                        onsubmit="return confirm('Are you sure you want to delete this time adjustment?');">
+                                    <button type="submit" class="btn btn-outline-danger" title="Delete Adjustment">
+                                      <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                  </form>
+                                {% else %}
+                                  <span class="text-muted">Admin Only</span>
+                                {% endif %}
+                              </div>
+                            {% elif is_locked %}
+                              <!-- Locked entry - show disabled buttons with tooltips -->
+                              <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-secondary" 
+                                        disabled 
+                                        title="Cannot edit - entry locked in accounting system">
+                                  <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary" 
+                                        disabled 
+                                        title="Cannot reassign - entry locked in accounting system">
+                                  <i class="fas fa-exchange-alt"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary" 
+                                        disabled 
+                                        title="Cannot delete - entry locked in accounting system">
+                                  <i class="fas fa-trash-alt"></i>
+                                </button>
+                              </div>
+                            {% else %}
+                              <!-- Normal entry - show active buttons -->
+                              <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-warning edit-entry-btn" title="Edit Entry">
+                                  <i class="fas fa-edit"></i>
+                                </button>
+                                <a href="{{ url_for('reassign_time_entry', time_entry_id=entry.id) }}" 
+                                  class="btn btn-outline-info" title="Reassign Entry">
+                                  <i class="fas fa-exchange-alt"></i>
+                                </a>
+                                <form action="{{ url_for('delete_time_entry', time_entry_id=entry.id) }}" 
+                                      method="POST" 
+                                      style="display:inline;" 
+                                      onsubmit="return confirm('Are you sure you want to delete this time entry?');">
+                                  <button type="submit" class="btn btn-outline-danger" title="Delete Entry">
+                                    <i class="fas fa-trash-alt"></i>
+                                  </button>
+                                </form>
+                              </div>
+                            {% endif %}
+                          </td>
+                        </tr>
+                        
+                        <!-- Edit Mode Row (Hidden by default) - Only show if not locked and not adjustment -->
+                        {% if not is_locked and not is_adjustment %}
+                        <tr class="edit-mode" data-entry-id="{{ entry.id }}" style="display: none;">
+                          <td class="text-center">{{ entry.id }}</td>
+                          <td><input type="text" class="form-control form-control-sm" name="engineer" value="{{ entry.engineer }}"></td>
+                          <td><input type="date" class="form-control form-control-sm" name="work_date" value="{{ entry.work_date.strftime('%Y-%m-%d') }}"></td>
+                          <td><input type="time" class="form-control form-control-sm" name="time_in" value="{{ entry.time_in.strftime('%H:%M') }}"></td>
+                          <td><input type="time" class="form-control form-control-sm" name="time_out" value="{{ entry.time_out.strftime('%H:%M') }}"></td>
+                          <td class="text-center font-weight-bold">{{ entry.hours_worked | round(2) }}</td>
+                          <td><input type="text" class="form-control form-control-sm" name="description" value="{{ entry.description }}"></td>
+                          <td class="text-center">
+                            <small class="text-muted">JL: {{ '✓' if entry.entered_on_jl else '✗' }}</small><br>
+                            <small class="text-muted">JT: {{ '✓' if entry.entered_on_jt else '✗' }}</small>
+                          </td>
+                          <td class="text-center">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                          <td class="text-center">
+                            <div class="btn-group btn-group-sm">
+                              <button type="button" class="btn btn-success save-entry-btn">
+                                <i class="fas fa-save"></i> Save
+                              </button>
+                              <button type="button" class="btn btn-secondary cancel-edit-btn">
+                                <i class="fas fa-times"></i> Cancel
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                        {% endif %}
+                        
+                        {% endif %} <!-- End admin check for time adjustments -->
+                      {% endfor %}
+                      
+                      {% if not work_order.time_entries %}
+                        <tr>
+                          <td colspan="10" class="text-center py-4">
+                            <div class="empty-state">
+                              <i class="far fa-clock mb-3" style="font-size: 3rem; color: #dee2e6;"></i>
+                              <h5>No Time Entries Found</h5>
+                              <p class="text-muted">No time has been logged for this work order yet.</p>
+                            </div>
+                          </td>
+                        </tr>
+                      {% endif %}
+                    </tbody>
+                    
+                    <!-- Table Footer with Totals -->
+                    {% if work_order.time_entries %}
+                    <tfoot>
+                      <tr class="bg-light">
+                        <td colspan="5" class="text-right font-weight-bold">Total Hours:</td>
+                        <td class="text-center font-weight-bold">{{ work_order.hours_logged | round(2) }}</td>
+                        <td colspan="4"></td>
+                      </tr>
+                    </tfoot>
+                    {% endif %}
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Documents Tab -->
+          <div class="tab-pane fade" id="documents" role="tabpanel" aria-labelledby="documents-tab">
+            <div class="card">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Uploaded Documents</h5>
+                <div>
+                  <a href="{{ url_for('upload_document', work_order_id=work_order.id) }}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-upload mr-1"></i> Upload Document
+                  </a>
+                  <a href="{{ url_for('download_report_template', work_order_id=work_order.id) }}" class="btn btn-sm btn-info">
+                    <i class="fas fa-file-download mr-1"></i> Download Report Template
+                  </a>
+                </div>
+              </div>
+              <div class="card-body">
+                {% if work_order.documents %}
+                  <div class="table-responsive">
+                    <table class="table table-hover">
+                      <thead>
+                        <tr>
+                          <th>Document</th>
+                          <th>Upload Date</th>
+                          <th>Approved</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for doc in work_order.documents %}
+                          <tr>
+                            <td>
+                              <a href="{{ url_for('download_document',
+                                                  work_order_id=work_order.id,
+                                                  document_id=doc.id) }}"
+                                target="_blank">
+                                <i class="fas fa-file-alt mr-2"></i>{{ doc.original_filename }}
+                              </a>
+
+                            </td>
+                            <td>{{ doc.upload_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td class="text-center">
+                              <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input approval-checkbox" 
+                                      id="approve-{{ doc.id }}" 
+                                      data-document-id="{{ doc.id }}" 
+                                      {% if doc.is_approved %}checked{% endif %}>
+                                <label class="custom-control-label" for="approve-{{ doc.id }}"></label>
+                              </div>
+                            </td>
+                            <td>
+                              <form action="{{ url_for('delete_work_order_document',
+                                                      work_order_id=work_order.id,
+                                                      document_id=doc.id) }}"
+                                    method="POST"
+                                    style="display:inline;"
+                                    onsubmit="return confirm('Are you sure you want to delete this document?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                  <i class="fas fa-trash-alt mr-1"></i> Delete
+                                </button>
+                              </form>
+                            </td>
+                          </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                {% else %}
+                  <div class="text-center py-4">
+                    <i class="far fa-file-alt mb-3" style="font-size: 3rem; color: #dee2e6;"></i>
+                    <h5>No Documents Uploaded</h5>
+                    <p class="text-muted">Upload documents related to this work order for easy reference.</p>
+                    <a href="{{ url_for('upload_document', work_order_id=work_order.id) }}" class="btn btn-primary mt-2">
+                      <i class="fas fa-upload mr-1"></i> Upload First Document
+                    </a>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          
+          <!-- Project Tab (if applicable) -->
+          {% if work_order.classification == "Contract/Project" %}
+          <div class="tab-pane fade" id="project" role="tabpanel" aria-labelledby="project-tab">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0">Project Information</h5>
+              </div>
+              <div class="card-body">
+                {% if associated_project %}
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <div class="field-label">Project Name</div>
+                        <div class="field-value">{{ associated_project.name }}</div>
+                      </div>
+                      <div class="mb-3">
+                        <div class="field-label">Status</div>
+                        <div class="field-value">
+                          <span class="badge badge-{{ associated_project.status.lower().replace(' ', '-') }} p-2">{{ associated_project.status }}</span>
+                        </div>
+                      </div>
+                      <div class="mb-3">
+                        <div class="field-label">Start Date</div>
+                        <div class="field-value">
+                          {{ associated_project.start_date.strftime('%Y-%m-%d') if associated_project.start_date else 'Not set' }}
+                        </div>
+                      </div>
+                      <div class="mb-3">
+                        <div class="field-label">End Date</div>
+                        <div class="field-value">
+                          {{ associated_project.end_date.strftime('%Y-%m-%d') if associated_project.end_date else 'Not set' }}
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <div class="field-label">Tasks</div>
+                        <div class="field-value">
+                          {{ associated_project.tasks|length }} tasks
+                        </div>
+                      </div>
+                      <div class="mb-3">
+                        <div class="field-label">Task Completion</div>
+                        <div class="field-value">
+                          {% set completed_tasks = associated_project.tasks|selectattr('status', 'equalto', 'Completed')|list|length %}
+                          {% set total_tasks = associated_project.tasks|length %}
+                          {% if total_tasks > 0 %}
+                            {% set progress = (completed_tasks / total_tasks * 100)|int %}
+                            <div class="progress" style="height: 10px;">
+                              <div class="progress-bar bg-success" role="progressbar" style="width: {{ progress }}%;">
+                              </div>
+                            </div>
+                            <small class="mt-1 d-block">{{ completed_tasks }}/{{ total_tasks }} tasks ({{ progress }}%)</small>
+                          {% else %}
+                            <span class="text-muted">No tasks created</span>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row mt-3">
+                    <div class="col-12">
+                      <div class="field-label">Description</div>
+                      <div class="field-value">{{ associated_project.description or 'No description provided' }}</div>
+                    </div>
+                  </div>
+                  <div class="mt-3">
+                    <a href="{{ url_for('project_detail', project_id=associated_project.id) }}" class="btn btn-primary">
+                      <i class="fas fa-project-diagram mr-1"></i> View Project Details
+                    </a>
+                    <a href="{{ url_for('project_gantt', project_id=associated_project.id) }}" class="btn btn-info ml-2">
+                      <i class="fas fa-chart-bar mr-1"></i> View Gantt Chart
+                    </a>
+                  </div>
+                {% else %}
+                  <div class="text-center py-4">
+                    <i class="fas fa-project-diagram mb-3" style="font-size: 3rem; color: #dee2e6;"></i>
+                    <h5>No Project Created</h5>
+                    <p class="text-muted">This work order is classified as Contract/Project but does not have an associated project yet.</p>
+                    <a href="{{ url_for('new_project') }}" class="btn btn-primary mt-2">
+                      <i class="fas fa-plus mr-1"></i> Create Project
+                    </a>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      
+      <div class="col-lg-4">
+        <!-- Quick Actions Card -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-bolt mr-2"></i>Quick Actions</h5>
+          </div>
+          <div class="card-body">
+            <div class="quick-actions d-none d-lg-flex">
+              <a href="{{ url_for('upload_document', work_order_id=work_order.id) }}" class="btn">
+                <i class="fas fa-upload"></i>
+                Upload Document
+              </a>
+              <a href="{{ url_for('download_report_template', work_order_id=work_order.id) }}" class="btn">
+                <i class="fas fa-file-download"></i>
+                Report Template
+              </a>
+              <a href="{{ url_for('index') }}" class="btn">
+                <i class="fas fa-folder-open"></i>
+                Open WOs
+              </a>
+            </div>
+            
+            <div class="list-group mt-3">
+              <a href="{{ url_for('index') }}" class="list-group-item list-group-item-action">
+                <i class="fas fa-folder-open mr-2"></i> View Open Work Orders
+              </a>
+              <a href="{{ url_for('completed_work_orders') }}" class="list-group-item list-group-item-action">
+                <i class="fas fa-check-circle mr-2"></i> View Completed Work Orders
+              </a>
+              <a href="{{ url_for('closed_work_orders') }}" class="list-group-item list-group-item-action">
+                <i class="fas fa-times-circle mr-2"></i> View Closed Work Orders
+              </a>
+              <a href="{{ url_for('upload_document', work_order_id=work_order.id) }}" class="list-group-item list-group-item-action d-lg-none">
+                <i class="fas fa-upload mr-2"></i> Upload Document
+              </a>
+              <a href="{{ url_for('download_report_template', work_order_id=work_order.id) }}" class="list-group-item list-group-item-action d-lg-none">
+                <i class="fas fa-file-download mr-2"></i> Download Report Template
+              </a>
+              
+              {% if work_order.classification == "Contract/Project" %}
+                {% if associated_project %}
+                  <a href="{{ url_for('project_detail', project_id=associated_project.id) }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-project-diagram mr-2"></i> View Project Details
+                  </a>
+                {% else %}
+                  <a href="{{ url_for('new_project') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-plus mr-2"></i> Create Project
+                  </a>
+                {% endif %}
+              {% endif %}
+            </div>
+            
+            <hr>
+            
+            <form action="{{ url_for('delete_work_order', work_order_id=work_order.id) }}" method="POST" class="mt-3" onsubmit="return confirm('Are you sure you want to delete this work order? This will remove all associated time entries and documents.');">
+              <div class="input-group">
+                <input type="password" name="password" placeholder="Password" class="form-control" required>
+                <div class="input-group-append">
+                  <button type="submit" class="btn btn-danger">Delete Work Order</button>
+                </div>
+              </div>
+              <small class="form-text text-muted">Enter delete password to remove this work order and all associated data.</small>
+            </form>
+          </div>
+        </div>
+        
+        <!-- Work Order Stats Card -->
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-chart-pie mr-2"></i>Work Order Stats</h5>
+          </div>
+          <div class="card-body p-0">
+            <div class="list-group list-group-flush">
+              <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center">
+                  <span>Total Hours Logged:</span>
+                  <span class="badge badge-primary badge-pill">{{ work_order.hours_logged | round(2) }}</span>
+                </div>
+              </div>
+              <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center">
+                  <span>Estimated Hours:</span>
+                  <span class="badge badge-secondary badge-pill">{{ work_order.estimated_hours }}</span>
+                </div>
+              </div>
+              <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center">
+                  <span>Hours Remaining:</span>
+                  <span class="badge {% if work_order.hours_remaining < 0 %}badge-danger{% else %}badge-success{% endif %} badge-pill">
+                    {{ work_order.hours_remaining | round(2) }}
+                  </span>
+                </div>
+              </div>
+              <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center">
+                  <span>Time Entries:</span>
+                  <span class="badge badge-info badge-pill">{{ work_order.time_entries|length }}</span>
+                </div>
+              </div>
+              <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center">
+                  <span>Documents:</span>
+                  <span class="badge badge-info badge-pill">{{ work_order.documents|length }}</span>
+                </div>
+              </div>
+              <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center">
+                  <span>Has Report:</span>
+                  <span class="badge {% if work_order.has_report %}badge-success{% else %}badge-warning{% endif %} badge-pill">
+                    {{ '✓' if work_order.has_report else '✗' }}
+                  </span>
+                </div>
+              </div>
+              <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center">
+                  <span>Report Approved:</span>
+                  <span class="badge {% if work_order.has_approved_report %}badge-success{% else %}badge-warning{% endif %} badge-pill">
+                    {{ '✓' if work_order.has_approved_report else '✗' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Legend Card -->
+        <div class="card mt-4">
+          <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-info-circle mr-2"></i>Status Legend</h5>
+          </div>
+          <div class="card-body">
+            <div class="d-flex align-items-center mb-2">
+              <div class="status-badge status-Open mr-2">Open</div>
+              <span>Work in progress</span>
+            </div>
+            <div class="d-flex align-items-center mb-2">
+              <div class="status-badge status-Complete mr-2">Complete</div>
+              <span>Work finished, pending closure</span>
+            </div>
+            <div class="d-flex align-items-center">
+              <div class="status-badge status-Closed mr-2">Closed</div>
+              <span>Work order finalized</span>
+            </div>
+            
+            <hr>
+            
+            <div class="d-flex align-items-center mb-2">
+              <div style="width: 120px">
+                <span class="badge badge-billable">Billable</span>
+              </div>
+              <span>Standard billable work</span>
+            </div>
+            <div class="d-flex align-items-center mb-2">
+              <div style="width: 120px">
+                <span class="badge badge-non-billable">Non-Billable</span>
+              </div>
+              <span>Internal non-billable work</span>
+            </div>
+            <div class="d-flex align-items-center">
+              <div style="width: 120px">
+                <span class="badge badge-contract-project">Contract/Project</span>
+              </div>
+              <span>Work under contract agreement</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Modal (for better mobile experience) -->
+  <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to delete Work Order <strong>{{ work_order.rmj_job_number }}</strong>?</p>
+          <p class="text-danger">This will permanently remove the work order and all associated time entries and documents.</p>
+          <form id="deleteForm" method="POST" action="{{ url_for('delete_work_order', work_order_id=work_order.id) }}">
+            <div class="form-group">
+              <label for="deletePassword">Password:</label>
+              <input type="password" name="password" id="deletePassword" class="form-control" required>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" onclick="submitDelete()">Delete Work Order</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+
+    // Request Manager for preventing duplicate AJAX calls
+    var RequestManager = {
+        pendingRequests: {},
+        debounceTimers: {},
+        
+        // Debounced request with deduplication
+        makeRequest: function(key, requestFn, delay) {
+            delay = delay || 300; // Default 300ms delay
+            
+            // Clear any existing timer for this key
+            if (this.debounceTimers[key]) {
+                clearTimeout(this.debounceTimers[key]);
+            }
+            
+            // Cancel any pending request for this key
+            if (this.pendingRequests[key]) {
+                this.pendingRequests[key].abort();
+                delete this.pendingRequests[key];
+            }
+            
+            // Set up new debounced request
+            this.debounceTimers[key] = setTimeout(() => {
+                // Execute the request and store the jqXHR object
+                this.pendingRequests[key] = requestFn();
+                
+                // Clean up when request completes
+                if (this.pendingRequests[key]) {
+                    this.pendingRequests[key].always(() => {
+                        delete this.pendingRequests[key];
+                    });
+                }
+                
+                delete this.debounceTimers[key];
+            }, delay);
+        }
+    };
+    
+  $(document).ready(function() {
+    // Toggle edit mode for work order details
+    $('#edit-mode-btn, #edit-mode-btn-header').click(function() {
+      $('#view-mode').hide();
+      $('#edit-mode').show();
+    });
+    
+    // Cancel editing work order
+    $('#cancel-edit-btn').click(function() {
+      $('#edit-mode').hide();
+      $('#view-mode').show();
+    });
+    
+    // Handle form submission with AJAX for work order
+    $('#edit-form').submit(function(e) {
+      e.preventDefault();
+      
+      $.ajax({
+        url: $(this).attr('action'),
+        type: 'POST',
+        data: $(this).serialize(),
+        success: function(response) {
+          // Update the view with new values
+          const formData = new FormData(document.getElementById('edit-form'));
+
+          $('#view-customer-work-order-number').text(formData.get('customer_work_order_number'));
+          $('#view-rmj-job-number').text(formData.get('rmj_job_number'));
+          $('#view-description').text(formData.get('description'));
+          $('#view-owner').text(formData.get('owner'));
+          $('#view-requested-by').text(formData.get('requested_by'));
+          $('#view-estimated-hours').text(formData.get('estimated_hours'));
+          $('#view-priority').text(formData.get('priority'));
+          $('#view-location').text(formData.get('location'));
+
+          // Handle scheduled date (format it nicely or show 'Not scheduled')
+          const schedDate = formData.get('scheduled_date');
+          $('#view-scheduled-date').text(schedDate ? schedDate : 'Not scheduled');
+
+          // Update status with proper badge HTML
+          const newStatus = formData.get('status');
+          $('#view-status').html(`<span class="status-badge status-${newStatus}">${newStatus}</span>`);
+
+          // Update classification with proper badge HTML
+          const newClassification = formData.get('classification');
+          const classificationClass = newClassification.toLowerCase().replace('/', '-');
+          $('#view-classification').html(`<span class="badge badge-custom badge-${classificationClass}">${newClassification}</span>`);
+
+          // Update approval status display
+          const approvedForWork = formData.get('approved_for_work');
+          if (approvedForWork) {
+            $('#view-approved-for-work').html('<span class="badge badge-success"><i class="fas fa-check-circle mr-1"></i> Approved</span>');
+          } else {
+            $('#view-approved-for-work').html('<span class="badge badge-warning"><i class="fas fa-clock mr-1"></i> Pending Approval</span>');
+          }
+
+          // Switch back to view mode
+          $('#edit-mode').hide();
+          $('#view-mode').show();
+          
+          // Show success message
+          showSaveConfirmation('Work order updated successfully!');
+        },
+        error: function() {
+          alert('Error updating work order. Please try again.');
+        }
+      });
+    });
+    
+    // Make the tab system remember the active tab
+    // Store active tab in localStorage
+    $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+      localStorage.setItem('lastWorkOrderTab', $(e.target).attr('href'));
+    });
+    
+    // Go to the last active tab, if it exists
+    var lastTab = localStorage.getItem('lastWorkOrderTab');
+    if (lastTab) {
+      $('a[href="' + lastTab + '"]').tab('show');
+    }
+    
+    // Enter edit mode for time entry - Modified with JL/JT protection
+    $(document).on('click', '.edit-entry-btn', function() {
+      const viewRow = $(this).closest('tr');
+      const entryId = viewRow.data('entry-id');
+      
+      // Check if this is a locked entry (should not happen due to disabled buttons, but just in case)
+      if (viewRow.hasClass('table-warning')) {
+        alert('Cannot edit this time entry - it has been entered into the accounting system.');
+        return;
+      }
+      
+      // Hide ALL edit rows first (in case another row is being edited)
+      $('.edit-mode').hide();
+      $('.editable-row').show();
+      
+      // Hide this view row
+      viewRow.hide();
+      
+      // Find and show the corresponding edit row
+      $(`.edit-mode[data-entry-id="${entryId}"]`).show();
+    });
+    
+    // Click on editable value to enter edit mode - Modified with JL/JT protection
+    $(document).on('click', '.editable-value', function() {
+      const viewRow = $(this).closest('tr');
+      
+      // Check if this is a locked entry or time adjustment
+      if (viewRow.hasClass('table-warning') || viewRow.hasClass('time-adjustment-row')) {
+        // Don't allow editing of locked entries or time adjustments
+        return;
+      }
+      
+      // Proceed with normal edit functionality
+      viewRow.find('.edit-entry-btn').click();
+    });
+    
+    // Cancel edit mode for time entry
+    $(document).on('click', '.cancel-edit-btn', function() {
+      // Get the edit row and entry ID
+      const editRow = $(this).closest('tr');
+      const entryId = editRow.data('entry-id');
+      
+      // Hide this edit row
+      editRow.hide();
+      
+      // Show the corresponding view row
+      $(`.editable-row[data-entry-id="${entryId}"]`).show();
+    });
+    
+    // Save time entry changes
+    $(document).on('click', '.save-entry-btn', function() {
+      // Get the edit row and entry ID
+      const editRow = $(this).closest('tr');
+      const entryId = editRow.data('entry-id');
+      const viewRow = $(`.editable-row[data-entry-id="${entryId}"]`);
+      
+      // Get form values
+      const engineer = editRow.find('input[name="engineer"]').val();
+      const workDate = editRow.find('input[name="work_date"]').val();
+      const timeIn = editRow.find('input[name="time_in"]').val();
+      const timeOut = editRow.find('input[name="time_out"]').val();
+      const description = editRow.find('input[name="description"]').val();
+      
+      // Create data object for AJAX
+      const data = {
+        engineer: engineer,
+        work_date: workDate,
+        time_in: timeIn,
+        time_out: timeOut,
+        description: description
+      };
+      
+      // Send AJAX request to update the time entry
+      $.ajax({
+        url: `/time_entry/${entryId}/update`,
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        success: function(response) {
+          // Update view row with new values
+          viewRow.find('[data-field="engineer"]').text(engineer);
+          viewRow.find('[data-field="work_date"]').text(workDate);
+          viewRow.find('[data-field="time_in"]').text(timeIn);
+          viewRow.find('[data-field="time_out"]').text(timeOut);
+          viewRow.find('[data-field="description"]').text(description);
+          
+          // Hide edit row
+          editRow.hide();
+          
+          // Show view row
+          viewRow.show();
+          
+          // Show success message
+          showSaveConfirmation('Time entry updated successfully!');
+          
+          // Optionally update hours worked if returned in response
+          if (response && response.hours_worked) {
+            viewRow.find('td:nth-child(6)').text(parseFloat(response.hours_worked).toFixed(2));
+            editRow.find('td:nth-child(6)').text(parseFloat(response.hours_worked).toFixed(2));
+          }
+        },
+        error: function(xhr) {
+          const response = xhr.responseJSON;
+          if (response && response.error) {
+            alert('Error updating time entry: ' + response.error);
+          } else {
+            alert('Error updating time entry. Please try again.');
+          }
+        }
+      });
+    });
+    
+    // Unbind any existing handlers first to prevent duplicates
+    $(document).off('change', '.jl-checkbox, .jt-checkbox');
+
+    // Handle JL/JT checkbox changes - Updated version
+    $(document).on('change', '.jl-checkbox, .jt-checkbox', function(e) {
+        e.stopPropagation(); // Prevent event bubbling
+        
+        const entryId = $(this).data('entry-id');
+        const checkboxType = $(this).data('type');
+        const isChecked = $(this).is(':checked');
+        const checkbox = $(this);
+        
+        // Create a unique key for this request
+        const requestKey = `checkbox_${entryId}_${checkboxType}`;
+        
+        // Prepare the data object
+        const data = {};
+        if (checkboxType === 'jl') {
+            data.entered_on_jl = isChecked;
+        } else if (checkboxType === 'jt') {
+            data.entered_on_jt = isChecked;
+        }
+        
+        // Use RequestManager to handle the AJAX request with debouncing
+        RequestManager.makeRequest(requestKey, function() {
+            return $.ajax({
+                url: `/time_entry/${entryId}/update_checkboxes`,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function(response) {
+                    if (response.success) {
+                        // Check if either checkbox is now checked to update the row styling
+                        const row = $(`.editable-row[data-entry-id="${entryId}"]`);
+                        const jlChecked = row.find('.jl-checkbox').is(':checked');
+                        const jtChecked = row.find('.jt-checkbox').is(':checked');
+                        const isLocked = jlChecked || jtChecked;
+                        
+                        if (isLocked) {
+                            // Add warning styling and lock icon if not already present
+                            row.addClass('table-warning');
+                            if (row.find('.fa-lock').length === 0) {
+                                row.find('td:first-child').append('<i class="fas fa-lock text-warning ml-1" title="Entry locked - entered in accounting system"></i>');
+                            }
+                            
+                            // Replace action buttons with disabled ones
+                            const actionCell = row.find('.time-inline-actions');
+                            actionCell.html(`
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-secondary" disabled title="Cannot edit - entry locked in accounting system">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-outline-secondary" disabled title="Cannot reassign - entry locked in accounting system">
+                                        <i class="fas fa-exchange-alt"></i>
+                                    </button>
+                                    <button class="btn btn-outline-secondary" disabled title="Cannot delete - entry locked in accounting system">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            `);
+                            
+                            // Disable editable values
+                            row.find('.editable-value').addClass('text-muted').css('cursor', 'not-allowed');
+                        } else {
+                            // Remove warning styling and lock icon
+                            row.removeClass('table-warning');
+                            row.find('.fa-lock').remove();
+                            
+                            // Restore original action buttons
+                            const actionCell = row.find('.time-inline-actions');
+                            actionCell.html(`
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-warning edit-entry-btn" title="Edit Entry">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <a href="/time_entry/${entryId}/reassign" class="btn btn-outline-info" title="Reassign Entry">
+                                        <i class="fas fa-exchange-alt"></i>
+                                    </a>
+                                    <form action="/time_entry/${entryId}/delete" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this time entry?');">
+                                        <button type="submit" class="btn btn-outline-danger" title="Delete Entry">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            `);
+                            
+                            // Re-enable editable values
+                            row.find('.editable-value').removeClass('text-muted').css('cursor', 'pointer');
+                        }
+                        
+                        // Show success message if we have the showSaveConfirmation function
+                        if (typeof showSaveConfirmation === 'function') {
+                            showSaveConfirmation(`${checkboxType.toUpperCase()} status updated successfully!`);
+                        }
+                    } else {
+                        // Handle server-side error
+                        alert('Error updating checkbox status: ' + (response.message || 'Unknown error'));
+                        // Revert the checkbox if the update failed
+                        checkbox.prop('checked', !isChecked);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    // Only handle error if request wasn't aborted
+                    if (status !== 'abort') {
+                        console.error('AJAX Error:', {
+                            status: xhr.status,
+                            statusText: xhr.statusText,
+                            responseText: xhr.responseText,
+                            error: error
+                        });
+                        
+                        let errorMessage = 'Error updating checkbox status.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage += ' ' + xhr.responseJSON.message;
+                        } else if (xhr.responseText) {
+                            errorMessage += ' Server response: ' + xhr.responseText;
+                        }
+                        
+                        alert(errorMessage);
+                        
+                        // Revert the checkbox if the update failed
+                        checkbox.prop('checked', !isChecked);
+                    }
+                }
+            });
+        }, 300); // 300ms debounce delay
+    });
+    
+    // Document approval checkbox handling
+    $('.approval-checkbox').change(function() {
+      const documentId = $(this).data('document-id');
+      const isApproved = $(this).is(':checked');
+      const checkbox = $(this);
+      
+      // Send AJAX request to update approval status
+      $.ajax({
+        url: `/document/${documentId}/toggle_approval`,
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+          is_approved: isApproved
+        }),
+        success: function(response) {
+          // Show success message
+          showSaveConfirmation(`Document ${isApproved ? 'approved' : 'unapproved'} successfully!`);
+        },
+        error: function() {
+          // Show error and revert checkbox
+          alert('Error updating document approval status');
+          checkbox.prop('checked', !isApproved);
+        }
+      });
+    });
+    
+    // Show save confirmation toast
+    window.showSaveConfirmation = function(message) {
+      const toast = $('#saveConfirmation');
+      $('#saveConfirmationText').text(message);
+      toast.addClass('show');
+      
+      // Hide after 3 seconds
+      setTimeout(function() {
+        toast.removeClass('show');
+      }, 3000);
+    };
+  });
+
+  // Show delete modal for mobile devices instead of inline form
+  function showDeleteModal() {
+    $('#deleteModal').modal('show');
+  }
+
+  // Submit delete form from modal
+  function submitDelete() {
+    const form = document.getElementById('deleteForm');
+    const pwdField = document.getElementById('deletePassword');
+    
+    if (!pwdField.value || pwdField.value.trim() === '') {
+      alert('Please enter the delete password');
+      return;
+    }
+    
+    form.submit();
+  }
+
+  // Lunch checkbox toggle
+  $('#had_lunch').change(function() {
+    if ($(this).is(':checked')) {
+      $('#lunch_times').slideDown();
+      $('#lunch_end_group').slideDown();
+    } else {
+      $('#lunch_times').slideUp();
+      $('#lunch_end_group').slideUp();
+      $('#lunch_start').val('');
+      $('#lunch_end').val('');
+    }
+  });
+
+  // Validate lunch timing on form submit
+  $('form').submit(function(e) {
+    const hadLunch = $('#had_lunch').is(':checked');
+    
+    if (hadLunch) {
+      const timeIn = $('input[name="time_in"]').val();
+      const lunchEnd = $('#lunch_end').val();
+      
+      if (timeIn && lunchEnd) {
+        // Parse times
+        const [startHour, startMin] = timeIn.split(':').map(Number);
+        const [lunchHour, lunchMin] = lunchEnd.split(':').map(Number);
+        
+        // Convert to minutes since midnight
+        const startMinutes = startHour * 60 + startMin;
+        let lunchMinutes = lunchHour * 60 + lunchMin;
+        
+        // Handle overnight (if lunch is "earlier" than start, add 24 hours)
+        if (lunchMinutes < startMinutes) {
+          lunchMinutes += 24 * 60;
+        }
+        
+        // Calculate difference in hours
+        const hoursDiff = (lunchMinutes - startMinutes) / 60;
+        
+        if (hoursDiff > 6) {
+          e.preventDefault();
+          alert(`Lunch must be taken within 6 hours of start time.\n\nStart: ${timeIn}\nLunch End: ${lunchEnd}\nTime difference: ${hoursDiff.toFixed(1)} hours\n\nPlease adjust your lunch time.`);
+          $('#lunch_end').focus();
+          return false;
+        }
+      }
+    }
+  });
+
+  </script>
+</body>
+</html>

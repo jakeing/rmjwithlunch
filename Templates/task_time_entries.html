@@ -1,0 +1,653 @@
+<!-- templates/task_time_entries.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>{{ task.name }} - Time Entries - RMJ Dashboard</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+  <style>
+    /* Navbar */
+    .navbar { background-color: #ffffff; }
+    .navbar-brand img { height: 40px; }
+    .dropdown-menu { border-radius: .35rem; }
+
+    /* Full-width container */
+    .container-fluid { max-width: 100%; padding: 0 0.5rem; }
+
+    /* Card styling */
+    .card {
+      border-radius: .35rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      margin-bottom: 1.5rem;
+    }
+    .card-header {
+      background-color: #f8f9fa;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    }
+    
+    /* Table styling */
+    .table-responsive { overflow-x: auto; }
+    .table { width: 100%; table-layout: auto; }
+    .table-hover tbody tr:hover { background-color: #f8f9fa; }
+    
+    /* Empty state styling */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+    }
+    .empty-state i {
+      font-size: 4rem;
+      color: #dee2e6;
+      margin-bottom: 1rem;
+    }
+    .empty-state h3 {
+      margin-bottom: 1rem;
+      color: #6c757d;
+    }
+
+    /* Animation for moving rows */
+    @keyframes highlightRow {
+      0% { background-color: #d4edda; }
+      100% { background-color: transparent; }
+    }
+    .highlight-new-row {
+      animation: highlightRow 2s ease;
+    }
+
+    /* Toast notification */
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1050;
+    }
+    .toast {
+      min-width: 250px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Include the existing navigation bar -->
+  {% include 'navbar.html' %}
+
+  <!-- Toast notification container -->
+  <div class="toast-container"></div>
+
+  <div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h1 class="h2 mb-0">{{ task.name }} - Time Entries</h1>
+        <p class="text-muted">
+          Project: <a href="{{ url_for('project_detail', project_id=project.id) }}">{{ project.name }}</a> |
+          Work Order: <a href="{{ url_for('work_order_detail', work_order_id=work_order.id) }}">{{ work_order.rmj_job_number }}</a>
+        </p>
+      </div>
+      <div>
+        <a href="{{ url_for('project_detail', project_id=project.id) }}" class="btn btn-secondary">
+          <i class="fas fa-arrow-left mr-1"></i> Back to Project
+        </a>
+        <button class="btn btn-primary" data-toggle="modal" data-target="#addTimeModal">
+          <i class="fas fa-plus mr-1"></i> Log Time
+        </button>
+      </div>
+    </div>
+    
+    <div class="row">
+      <div class="col-lg-4">
+        <!-- Task Details Card -->
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">Task Details</h5>
+          </div>
+          <div class="card-body">
+            <div class="row mb-3">
+              <div class="col-6">
+                <div class="small text-muted">Status</div>
+                <div class="font-weight-bold">{{ task.status }}</div>
+              </div>
+              <div class="col-6">
+                <div class="small text-muted">Priority</div>
+                <div class="font-weight-bold">{{ task.priority }}</div>
+              </div>
+            </div>
+            
+            <div class="row mb-3">
+              <div class="col-6">
+                <div class="small text-muted">Start Date</div>
+                <div class="font-weight-bold">{{ task.start_date.strftime('%Y-%m-%d') if task.start_date else 'Not set' }}</div>
+              </div>
+              <div class="col-6">
+                <div class="small text-muted">End Date</div>
+                <div class="font-weight-bold">{{ task.end_date.strftime('%Y-%m-%d') if task.end_date else 'Not set' }}</div>
+              </div>
+            </div>
+            
+            <div class="row mb-3">
+              <div class="col-4">
+                <div class="small text-muted">Estimated Hours</div>
+                <div class="font-weight-bold">{{ task.estimated_hours }}</div>
+              </div>
+              <div class="col-4">
+                <div class="small text-muted">Actual Hours</div>
+                <div class="font-weight-bold" id="actualHours">{{ task.actual_hours }}</div>
+              </div>
+              <div class="col-4">
+                <div class="small text-muted">Remaining</div>
+                <div class="font-weight-bold {% if task.hours_remaining < 0 %}text-danger{% endif %}" id="remainingHours">
+                  {{ task.hours_remaining|round(1) }}
+                </div>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <div class="small text-muted">Assigned To</div>
+              <div class="font-weight-bold">{{ task.assigned_to or 'Unassigned' }}</div>
+            </div>
+            
+            <div class="mb-3">
+              <div class="small text-muted">Description</div>
+              <div>{{ task.description or 'No description provided' }}</div>
+            </div>
+            
+            <div class="mt-4">
+              <a href="{{ url_for('edit_task', task_id=task.id) }}" class="btn btn-outline-primary btn-block">
+                <i class="fas fa-edit mr-1"></i> Edit Task
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-lg-8">
+        <!-- Task Time Entries Card -->
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Task Time Entries</h5>
+            <span class="badge badge-info" id="totalAssignedHours">Total: {{ task_entries|sum(attribute='hours_worked')|round(1) }} hours</span>
+          </div>
+          <div class="card-body">
+            <div id="assignedEntriesContainer">
+              {% if task_entries %}
+                <div class="table-responsive">
+                  <table class="table table-hover" id="assignedEntriesTable">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Engineer</th>
+                        <th>Date</th>
+                        <th>Time In</th>
+                        <th>Time Out</th>
+                        <th>Hours</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for entry in task_entries %}
+                        <tr data-entry-id="{{ entry.id }}" id="assigned-entry-{{ entry.id }}">
+                          <td>{{ entry.id }}</td>
+                          <td>{{ entry.engineer }}</td>
+                          <td>{{ entry.work_date.strftime('%Y-%m-%d') }}</td>
+                          <td>{{ entry.time_in.strftime('%H:%M') }}</td>
+                          <td>{{ entry.time_out.strftime('%H:%M') }}</td>
+                          <td class="entry-hours">{{ entry.hours_worked|round(1) }}</td>
+                          <td>{{ entry.description }}</td>
+                          <td>
+                            <button type="button" class="btn btn-sm btn-danger unassign-entry-btn" data-entry-id="{{ entry.id }}">
+                              <i class="fas fa-unlink"></i>
+                            </button>
+                          </td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              {% else %}
+                <div class="empty-state" id="noAssignedEntriesMessage">
+                  <i class="far fa-clock"></i>
+                  <h3>No Time Entries</h3>
+                  <p class="text-muted">No time has been logged for this task yet.</p>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        
+        <!-- Unassigned Work Order Time Entries -->
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Unassigned Work Order Time Entries</h5>
+            <span class="badge badge-info" id="totalUnassignedHours">Available: {{ unassigned_entries|sum(attribute='hours_worked')|round(1) }} hours</span>
+          </div>
+          <div class="card-body">
+            <div id="unassignedEntriesContainer">
+              {% if unassigned_entries %}
+                <div class="table-responsive">
+                  <table class="table table-hover" id="unassignedEntriesTable">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Engineer</th>
+                        <th>Date</th>
+                        <th>Time In</th>
+                        <th>Time Out</th>
+                        <th>Hours</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for entry in unassigned_entries %}
+                        <tr data-entry-id="{{ entry.id }}" id="unassigned-entry-{{ entry.id }}">
+                          <td>{{ entry.id }}</td>
+                          <td>{{ entry.engineer }}</td>
+                          <td>{{ entry.work_date.strftime('%Y-%m-%d') }}</td>
+                          <td>{{ entry.time_in.strftime('%H:%M') }}</td>
+                          <td>{{ entry.time_out.strftime('%H:%M') }}</td>
+                          <td class="entry-hours">{{ entry.hours_worked|round(1) }}</td>
+                          <td>{{ entry.description }}</td>
+                          <td>
+                            <button type="button" class="btn btn-sm btn-success assign-entry-btn" data-entry-id="{{ entry.id }}">
+                              <i class="fas fa-link mr-1"></i> Assign
+                            </button>
+                          </td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              {% else %}
+                <div class="empty-state" id="noUnassignedEntriesMessage">
+                  <i class="fas fa-check-circle"></i>
+                  <h3>No Unassigned Time Entries</h3>
+                  <p class="text-muted">All time entries for this work order have been assigned to tasks.</p>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Add Time Modal -->
+  <div class="modal fade" id="addTimeModal" tabindex="-1" role="dialog" aria-labelledby="addTimeModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addTimeModalLabel">Log Time for {{ task.name }}</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <form action="{{ url_for('update_task_hours', task_id=task.id) }}" method="POST">
+          <div class="modal-body">
+            <div class="form-row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="actual_hours">Hours</label>
+                  <input type="number" step="0.1" name="actual_hours" id="actual_hours" class="form-control" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="engineer">Engineer</label>
+                  <input type="text" name="engineer" id="engineer" class="form-control" value="{{ default_engineer|default('') }}" required>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="work_date">Date</label>
+              <input type="date" name="work_date" id="work_date" class="form-control" value="{{ today_date }}" required>
+            </div>
+            <div class="form-group">
+              <label for="description">Description</label>
+              <textarea name="description" id="description" class="form-control" rows="3" placeholder="Describe the work completed"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-success">Save Time Entry</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      // Initialize today's date for the date field if not provided server-side
+      var workDateField = document.getElementById('work_date');
+      if (!workDateField.value) {
+        var today = new Date();
+        var dd = String(today.getDate()).padStart(2, '0');
+        var mm = String(today.getMonth() + 1).padStart(2, '0');
+        var yyyy = today.getFullYear();
+        workDateField.value = yyyy + '-' + mm + '-' + dd;
+      }
+
+      // Function to show toast notification
+      function showToast(message, type = 'success') {
+        const toastId = 'toast-' + Date.now();
+        const toastHtml = `
+          <div class="toast" id="${toastId}" role="alert" aria-live="assertive" aria-atomic="true" data-delay="3000">
+            <div class="toast-header bg-${type} text-white">
+              <strong class="mr-auto"><i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} mr-1"></i> ${type === 'success' ? 'Success' : 'Error'}</strong>
+              <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="toast-body">
+              ${message}
+            </div>
+          </div>
+        `;
+        $('.toast-container').append(toastHtml);
+        $(`#${toastId}`).toast('show');
+        
+        // Remove toast after it's hidden
+        $(`#${toastId}`).on('hidden.bs.toast', function() {
+          $(this).remove();
+        });
+      }
+
+      // Function to update the hours counters
+      function updateHoursTotals() {
+        // Calculate total assigned hours
+        let assignedTotal = 0;
+        $('#assignedEntriesTable .entry-hours').each(function() {
+          assignedTotal += parseFloat($(this).text()) || 0;
+        });
+        
+        // Calculate total unassigned hours
+        let unassignedTotal = 0;
+        $('#unassignedEntriesTable .entry-hours').each(function() {
+          unassignedTotal += parseFloat($(this).text()) || 0;
+        });
+        
+        // Update the badges
+        $('#totalAssignedHours').text(`Total: ${assignedTotal.toFixed(1)} hours`);
+        $('#totalUnassignedHours').text(`Available: ${unassignedTotal.toFixed(1)} hours`);
+        
+        // Update the task stats
+        const estimatedHours = parseFloat('{{ task.estimated_hours }}') || 0;
+        const newRemainingHours = estimatedHours - assignedTotal;
+        
+        $('#actualHours').text(assignedTotal.toFixed(1));
+        $('#remainingHours').text(newRemainingHours.toFixed(1));
+        
+        if (newRemainingHours < 0) {
+          $('#remainingHours').addClass('text-danger');
+        } else {
+          $('#remainingHours').removeClass('text-danger');
+        }
+      }
+
+      // Function to ensure the table structure exists
+      function ensureTableStructure(containerId, tableId, emptyMsgId) {
+        const container = $(`#${containerId}`);
+        let table = $(`#${tableId}`);
+        
+        // If table doesn't exist or doesn't have a tbody, create the structure
+        if (table.length === 0) {
+          console.log(`Creating table structure for ${tableId}`);
+          
+          // Get the headers from the other table that does exist
+          let headerHtml = '';
+          if (tableId === 'assignedEntriesTable') {
+            headerHtml = $('#unassignedEntriesTable thead').html();
+          } else {
+            headerHtml = $('#assignedEntriesTable thead').html();
+          }
+          
+          // If we couldn't get headers from the other table, create default headers
+          if (!headerHtml) {
+            headerHtml = `
+              <tr>
+                <th>ID</th>
+                <th>Engineer</th>
+                <th>Date</th>
+                <th>Time In</th>
+                <th>Time Out</th>
+                <th>Hours</th>
+                <th>Description</th>
+                <th>Actions</th>
+              </tr>
+            `;
+          }
+          
+          // Create the table structure
+          const tableHtml = `
+            <div class="table-responsive">
+              <table class="table table-hover" id="${tableId}">
+                <thead>${headerHtml}</thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          `;
+          
+          // Replace the empty state message with the table
+          $(`#${emptyMsgId}`).hide();
+          container.html(tableHtml);
+          return true; // Table was created
+        }
+        
+        // Ensure tbody exists
+        if (table.find('tbody').length === 0) {
+          table.append('<tbody></tbody>');
+        }
+        
+        return false; // No changes were made
+      }
+
+      // Function to update empty state messages visibility
+      function updateEmptyStateMessages() {
+        console.log('Updating empty state messages');
+        
+        // Check assigned entries table
+        const assignedCount = $('#assignedEntriesTable tbody tr').length;
+        console.log('Assigned entries:', assignedCount);
+        
+        if (assignedCount === 0) {
+          // Hide the table and show the empty message
+          $('#assignedEntriesTable').closest('.table-responsive').hide();
+          
+          // Ensure empty message exists, create it if it doesn't
+          if ($('#noAssignedEntriesMessage').length === 0) {
+            $('#assignedEntriesContainer').html(`
+              <div class="empty-state" id="noAssignedEntriesMessage">
+                <i class="far fa-clock"></i>
+                <h3>No Time Entries</h3>
+                <p class="text-muted">No time has been logged for this task yet.</p>
+              </div>
+            `);
+          } else {
+            $('#noAssignedEntriesMessage').show();
+          }
+        } else {
+          // Show the table and hide the empty message
+          $('#assignedEntriesTable').closest('.table-responsive').show();
+          $('#noAssignedEntriesMessage').hide();
+        }
+        
+        // Check unassigned entries table
+        const unassignedCount = $('#unassignedEntriesTable tbody tr').length;
+        console.log('Unassigned entries:', unassignedCount);
+        
+        if (unassignedCount === 0) {
+          // Hide the table and show the empty message
+          $('#unassignedEntriesTable').closest('.table-responsive').hide();
+          
+          // Ensure empty message exists, create it if it doesn't
+          if ($('#noUnassignedEntriesMessage').length === 0) {
+            $('#unassignedEntriesContainer').html(`
+              <div class="empty-state" id="noUnassignedEntriesMessage">
+                <i class="fas fa-check-circle"></i>
+                <h3>No Unassigned Time Entries</h3>
+                <p class="text-muted">All time entries for this work order have been assigned to tasks.</p>
+              </div>
+            `);
+          } else {
+            $('#noUnassignedEntriesMessage').show();
+          }
+        } else {
+          // Show the table and hide the empty message
+          $('#unassignedEntriesTable').closest('.table-responsive').show();
+          $('#noUnassignedEntriesMessage').hide();
+        }
+      }
+
+      // Handle assign entry button click
+      $(document).on('click', '.assign-entry-btn', function() {
+        const entryId = $(this).data('entry-id');
+        const taskId = {{ task.id }};
+        const entryRow = $(`#unassigned-entry-${entryId}`);
+        
+        console.log(`Assigning entry ${entryId} to task ${taskId}`);
+        
+        // Disable the button during processing
+        $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+        
+        // Make the AJAX request to assign the entry
+        $.ajax({
+          url: `/time_entry/${entryId}/assign_to_task/${taskId}`,
+          type: 'POST',
+          dataType: 'json',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          success: function(response) {
+            console.log('Assignment successful:', response);
+            
+            // Ensure the assigned table structure exists before adding the row
+            const tableCreated = ensureTableStructure('assignedEntriesContainer', 'assignedEntriesTable', 'noAssignedEntriesMessage');
+            console.log('Table created:', tableCreated);
+            
+            // Create a copy of the row to move to the assigned table
+            const rowClone = entryRow.clone();
+            
+            // Replace the button with unassign button
+            rowClone.find('td:last-child').html(`
+              <button type="button" class="btn btn-sm btn-danger unassign-entry-btn" data-entry-id="${entryId}">
+                <i class="fas fa-unlink"></i>
+              </button>
+            `);
+            
+            // Change the row ID to match the assigned pattern
+            rowClone.attr('id', `assigned-entry-${entryId}`);
+            
+            // Add to assigned table and remove from unassigned
+            $('#assignedEntriesTable tbody').append(rowClone);
+            entryRow.remove();
+            
+            // Add highlight effect
+            rowClone.addClass('highlight-new-row');
+            
+            // Update hours totals
+            updateHoursTotals();
+            
+            // Update empty state messages
+            updateEmptyStateMessages();
+            
+            // Show success toast
+            showToast('Time entry assigned successfully');
+          },
+          error: function(xhr, status, error) {
+            console.error('Error assigning entry:', error);
+            console.log('Server response:', xhr.responseText);
+            // Reset the button
+            $(`.assign-entry-btn[data-entry-id="${entryId}"]`).prop('disabled', false).html('<i class="fas fa-link mr-1"></i> Assign');
+            
+            // Show error toast
+            let errorMsg = 'Failed to assign time entry';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+              errorMsg = xhr.responseJSON.message;
+            }
+            showToast(errorMsg, 'danger');
+          }
+        });
+      });
+
+      // Handle unassign entry button click
+      $(document).on('click', '.unassign-entry-btn', function() {
+        const entryId = $(this).data('entry-id');
+        const taskId = {{ task.id }};
+        const entryRow = $(`#assigned-entry-${entryId}`);
+        
+        console.log(`Unassigning entry ${entryId} from task ${taskId}`);
+        
+        // Disable the button during processing
+        $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+        
+        // Make the AJAX request to unassign the entry
+        $.ajax({
+          url: `/time_entry/${entryId}/remove_from_task/${taskId}`,
+          type: 'POST',
+          dataType: 'json',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          success: function(response) {
+            console.log('Unassignment successful:', response);
+            
+            // Ensure the unassigned table structure exists before adding the row
+            const tableCreated = ensureTableStructure('unassignedEntriesContainer', 'unassignedEntriesTable', 'noUnassignedEntriesMessage');
+            console.log('Table created:', tableCreated);
+            
+            // Create a copy of the row to move to the unassigned table
+            const rowClone = entryRow.clone();
+            
+            // Replace the button with assign button
+            rowClone.find('td:last-child').html(`
+              <button type="button" class="btn btn-sm btn-success assign-entry-btn" data-entry-id="${entryId}">
+                <i class="fas fa-link mr-1"></i> Assign
+              </button>
+            `);
+            
+            // Change the row ID to match the unassigned pattern
+            rowClone.attr('id', `unassigned-entry-${entryId}`);
+            
+            // Add to unassigned table and remove from assigned
+            $('#unassignedEntriesTable tbody').append(rowClone);
+            entryRow.remove();
+            
+            // Add highlight effect
+            rowClone.addClass('highlight-new-row');
+            
+            // Update hours totals
+            updateHoursTotals();
+            
+            // Update empty state messages
+            updateEmptyStateMessages();
+            
+            // Show success toast
+            showToast('Time entry unassigned successfully');
+          },
+          error: function(xhr, status, error) {
+            console.error('Error unassigning entry:', error);
+            console.log('Server response:', xhr.responseText);
+            // Reset the button
+            $(`.unassign-entry-btn[data-entry-id="${entryId}"]`).prop('disabled', false).html('<i class="fas fa-unlink"></i>');
+            
+            // Show error toast
+            let errorMsg = 'Failed to unassign time entry';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+              errorMsg = xhr.responseJSON.message;
+            }
+            showToast(errorMsg, 'danger');
+          }
+        });
+      });
+
+      // Initialize empty state messages
+      updateEmptyStateMessages();
+    });
+  </script>
+</body>
+</html>

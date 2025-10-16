@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Select Weekly Timesheet - RMJ Dashboard</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    /* Navbar */
+    .navbar { background-color: #ffffff; }
+    .navbar-brand img { height: 40px; }
+    .dropdown-menu { border-radius: .35rem; }
+
+    /* Full-width container */
+    .container-fluid { max-width: 100%; padding: 0 0.5rem; }
+
+    /* Card styling */
+    .card {
+      border-radius: .35rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      margin-bottom: 1.5rem;
+    }
+    .card-header {
+      background-color: #f8f9fa;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    }
+    
+    /* Form styling */
+    .form-control {
+      border-radius: .25rem;
+    }
+    .form-control:focus {
+      border-color: #80bdff;
+      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+    
+    /* Button improvements */
+    .btn {
+      border-radius: .25rem;
+      font-weight: 500;
+    }
+    .btn-primary {
+      background-color: #007bff;
+      border-color: #007bff;
+    }
+    .btn-primary:hover {
+      background-color: #0069d9;
+      border-color: #0062cc;
+    }
+    .btn-secondary {
+      background-color: #6c757d;
+      border-color: #6c757d;
+    }
+    .btn-secondary:hover {
+      background-color: #5a6268;
+      border-color: #545b62;
+    }
+    
+    /* Sticky header for mobile */
+    .sticky-top {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    
+    /* Mobile-specific styles */
+    @media (max-width: 767px) {
+      .mobile-p-0 { padding: 0 !important; }
+      .mobile-p-1 { padding: 0.25rem !important; }
+      
+      /* Fix navbar on mobile */
+      .navbar-collapse {
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+    }
+    
+    /* Page-specific styles */
+    .timesheet-content {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .form-heading {
+      font-size: 1.5rem;
+      font-weight: 500;
+      margin-bottom: 1.5rem;
+      color: #495057;
+    }
+    
+    .form-description {
+      color: #6c757d;
+      margin-bottom: 2rem;
+    }
+    
+    /* Year navigation */
+    .year-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    
+    .year-display {
+      font-size: 1.2rem;
+      font-weight: 500;
+    }
+    
+    .btn-year {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.875rem;
+    }
+    
+    /* Week selection styling */
+    .week-select-container {
+      border: 1px solid #dee2e6;
+      border-radius: .25rem;
+      padding: 1rem;
+      background-color: #f8f9fa;
+    }
+    
+    /* Footer spacing */
+    .page-footer {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid #dee2e6;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top py-2">
+    <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+      <img src="{{ url_for('static', filename='RMJ logo.png') }}" alt="RMJ Logo" class="mr-2">
+      <span class="h5 mb-0 d-none d-sm-inline">RMJ Dashboard</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav mr-auto">
+        <!-- Work Orders -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="woDropdown" role="button" data-toggle="dropdown">Work Orders</a>
+          <div class="dropdown-menu" aria-labelledby="woDropdown">
+            <a class="dropdown-item" href="{{ url_for('index') }}">Open</a>
+            <a class="dropdown-item" href="{{ url_for('completed_work_orders') }}">Completed</a>
+            <a class="dropdown-item" href="{{ url_for('closed_work_orders') }}">Closed</a>
+          </div>
+        </li>
+        <!-- Projects - New Section -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="projectsDropdown" role="button" data-toggle="dropdown">Projects</a>
+          <div class="dropdown-menu" aria-labelledby="projectsDropdown">
+            <a class="dropdown-item" href="{{ url_for('projects') }}">All Projects</a>
+            <a class="dropdown-item" href="{{ url_for('new_project') }}">New Project</a>
+          </div>
+        </li>
+        <!-- Timesheets -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="tsDropdown" role="button" data-toggle="dropdown">Timesheets</a>
+          <div class="dropdown-menu" aria-labelledby="tsDropdown">
+            <a class="dropdown-item" href="{{ url_for('new_timesheet') }}">New Entry</a>
+            <a class="dropdown-item" href="{{ url_for('select_weekly_timesheet') }}">Select Weekly</a>
+            <a class="dropdown-item" href="/workorder/reassign_entries">Reassign Entries</a>
+          </div>
+        </li>
+        <!-- Actions -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="actionsDropdown" role="button" data-toggle="dropdown">Actions</a>
+          <div class="dropdown-menu" aria-labelledby="actionsDropdown">
+            <a class="dropdown-item" href="{{ url_for('new_work_order') }}">Create WO</a>
+            <a class="dropdown-item" href="{{ url_for('import_excel') }}">Import Excel</a>
+            <a class="dropdown-item" href="{{ url_for('export_excel') }}">Export Excel</a>
+          </div>
+        </li>
+        <!-- Admin -->
+        {% if session.get('user_id') and (User.query.get(session.get('user_id')).role.lower() == 'admin' or User.query.get(session.get('user_id')).username.lower() == 'admin') %}
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-toggle="dropdown">Admin</a>
+          <div class="dropdown-menu" aria-labelledby="adminDropdown">
+            <a class="dropdown-item" href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+            <a class="dropdown-item" href="{{ url_for('admin_users') }}">User Mgmt</a>
+            <a class="dropdown-item" href="{{ url_for('admin_import_time_entries') }}">Import Time</a>
+            <a class="dropdown-item" href="{{ url_for('admin_email_settings') }}">Notifications</a>
+          </div>
+        </li>
+        {% endif %}
+      </ul>
+      <!-- Search inputs -->
+      <div class="d-flex flex-column flex-md-row">
+        <!-- Search all work orders -->
+        <form class="form-inline my-2 my-lg-0" action="{{ url_for('search') }}" method="get">
+          <input type="hidden" name="status" value="all">
+          <div class="input-group input-group-sm">
+            <input class="form-control form-control-sm" name="query" type="search" placeholder="Search All WOs" aria-label="Search All">
+            <div class="input-group-append">
+              <button class="btn btn-outline-primary btn-sm" type="submit">Search</button>
+            </div>
+          </div>
+        </form>
+      </div>
+      <ul class="navbar-nav ml-md-3 mt-2 mt-md-0">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container-fluid mt-4">
+    <div class="timesheet-content">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h2 mb-0">Select Weekly Timesheet</h1>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Choose a Year and Week</h5>
+        </div>
+        <div class="card-body">
+          <p class="text-muted mb-4">Select a year and week to view or edit the associated timesheet entries.</p>
+          
+          <!-- Year Selection with Navigation Buttons -->
+          <div class="year-nav mb-4">
+            <button type="button" class="btn btn-outline-secondary btn-year" id="prev-year">&laquo; Previous Year</button>
+            <div class="year-display" id="year-display">{{ year }}</div>
+            <button type="button" class="btn btn-outline-secondary btn-year" id="next-year">Next Year &raquo;</button>
+          </div>
+          
+          <form method="POST" action="{{ url_for('select_weekly_timesheet') }}" id="timesheet-form">
+            <div class="form-group d-none">
+              <label for="year-input">Year:</label>
+              <input type="number" id="year-input" name="year" class="form-control" value="{{ year }}" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="week-select"><strong>Select Week:</strong></label>
+              <div class="week-select-container">
+                <select id="week-select" name="week" class="form-control form-control-lg" required>
+                  {% for week, text in week_options %}
+                    <option value="{{ week }}">{{ text }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            
+            <div class="form-group mt-4">
+              <button type="submit" class="btn btn-primary btn-lg btn-block">View Timesheet</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      
+      <div class="card mt-4">
+        <div class="card-header">
+          <h5 class="mb-0">Quick Actions</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6 mb-2">
+              <a href="{{ url_for('new_timesheet') }}" class="btn btn-outline-primary btn-block">New Timesheet Entry</a>
+            </div>
+            <div class="col-md-6 mb-2">
+              <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-block">Back to Dashboard</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- jQuery for AJAX functionality -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    $(document).ready(function(){
+      // Year navigation buttons
+      $('#prev-year').click(function() {
+        const currentYear = parseInt($('#year-input').val());
+        const newYear = currentYear - 1;
+        $('#year-input').val(newYear);
+        $('#year-display').text(newYear);
+        fetchWeekOptions(newYear);
+      });
+      
+      $('#next-year').click(function() {
+        const currentYear = parseInt($('#year-input').val());
+        const newYear = currentYear + 1;
+        $('#year-input').val(newYear);
+        $('#year-display').text(newYear);
+        fetchWeekOptions(newYear);
+      });
+      
+      // Function to fetch week options via AJAX
+      function fetchWeekOptions(year) {
+        $.ajax({
+          url: '/timesheet/weeks/' + year,
+          method: 'GET',
+          dataType: 'json',
+          success: function(data) {
+            var weekSelect = $('#week-select');
+            weekSelect.empty();
+            
+            // Populate the dropdown with the new week options
+            $.each(data, function(index, option) {
+              weekSelect.append($('<option>', {
+                value: option.week,
+                text: option.text
+              }));
+            });
+          },
+          error: function() {
+            alert("Error retrieving week options.");
+          }
+        });
+      }
+      
+      // Highlight currently selected week in the dropdown
+      $('#week-select option').first().attr('selected', 'selected');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,280 @@
+<!-- templates/new_project.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Create New Project - RMJ Dashboard</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+  <style>
+    /* Navbar */
+    .navbar { background-color: #ffffff; }
+    .navbar-brand img { height: 40px; }
+    .dropdown-menu { border-radius: .35rem; }
+
+    /* Full-width container */
+    .container-fluid { max-width: 100%; padding: 0 0.5rem; }
+
+    /* Card styling */
+    .card {
+      border-radius: .35rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      margin-bottom: 1.5rem;
+    }
+    .card-header {
+      background-color: #f8f9fa;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    }
+    
+    /* Form styling */
+    .form-control {
+      border-radius: .25rem;
+    }
+    .form-control:focus {
+      border-color: #80bdff;
+      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+    
+    label {
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+      color: #495057;
+    }
+    
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+    
+    /* Button improvements */
+    .btn {
+      border-radius: .25rem;
+      font-weight: 500;
+    }
+    .btn-success {
+      background-color: #28a745;
+      border-color: #28a745;
+    }
+    .btn-success:hover {
+      background-color: #218838;
+      border-color: #1e7e34;
+    }
+    .btn-secondary {
+      background-color: #6c757d;
+      border-color: #6c757d;
+    }
+    .btn-secondary:hover {
+      background-color: #5a6268;
+      border-color: #545b62;
+    }
+    
+    /* Required field indicator */
+    .required-field::after {
+      content: "*";
+      color: #dc3545;
+      margin-left: 0.25rem;
+    }
+    
+    /* Section dividers */
+    .section-divider {
+      border-top: 1px solid #e9ecef;
+      margin: 1.5rem 0;
+    }
+    
+    /* Form sections */
+    .form-section {
+      margin-bottom: 1rem;
+    }
+    
+    .form-section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #495057;
+      margin-bottom: 1rem;
+    }
+    
+    /* Quick tips card */
+    .quick-tips {
+      background-color: #e9f7fe;
+      border-left: 4px solid #3498db;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      border-radius: .25rem;
+    }
+    
+    .quick-tips ul {
+      padding-left: 1.5rem;
+      margin-bottom: 0;
+    }
+    
+    .quick-tips li {
+      margin-bottom: 0.5rem;
+    }
+    
+    .quick-tips li:last-child {
+      margin-bottom: 0;
+    }
+    
+    /* Empty state styling */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+    }
+    .empty-state i {
+      font-size: 4rem;
+      color: #dee2e6;
+      margin-bottom: 1rem;
+    }
+    .empty-state h3 {
+      margin-bottom: 1rem;
+      color: #6c757d;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Include the existing navigation bar -->
+  {% include 'navbar.html' %}
+
+  <div class="container-fluid mt-4">
+    <div class="form-content">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h2 mb-0">Create New Project</h1>
+      </div>
+      
+      {% if error %}
+        <div class="alert alert-danger">
+          <strong>Error:</strong> {{ error }}
+        </div>
+      {% endif %}
+      
+      {% if work_orders %}
+      <div class="row">
+        <div class="col-lg-8">
+          <!-- Main form card -->
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">Project Details</h5>
+            </div>
+            <div class="card-body">
+              <form method="POST">
+                <!-- Work Order Selection Section -->
+                <div class="form-section">
+                  <div class="form-section-title">Select Work Order</div>
+                  <div class="form-group">
+                    <label for="work_order_id" class="required-field">Work Order:</label>
+                    <select id="work_order_id" name="work_order_id" class="form-control" required>
+                      <option value="">-- Select a Contract/Project Work Order --</option>
+                      {% for wo in work_orders %}
+                        <option value="{{ wo.id }}">{{ wo.rmj_job_number }} - {{ wo.customer_work_order_number }} - {{ wo.description }}</option>
+                      {% endfor %}
+                    </select>
+                    <small class="form-text text-muted">Only Contract/Project classified work orders are available</small>
+                  </div>
+                </div>
+                
+                <!-- Project Information Section -->
+                <div class="section-divider"></div>
+                <div class="form-section">
+                  <div class="form-section-title">Project Information</div>
+                  <div class="form-group">
+                    <label for="name" class="required-field">Project Name:</label>
+                    <input type="text" id="name" name="name" class="form-control" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="description">Description:</label>
+                    <textarea id="description" name="description" class="form-control" rows="3"></textarea>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="start_date">Start Date:</label>
+                        <input type="date" id="start_date" name="start_date" class="form-control">
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="end_date">End Date:</label>
+                        <input type="date" id="end_date" name="end_date" class="form-control">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="form-group mb-0">
+                  <button type="submit" class="btn btn-success btn-lg">Create Project</button>
+                  <a href="{{ url_for('projects') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-lg-4">
+          <!-- Quick Tips Card -->
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">Project Creation Tips</h5>
+            </div>
+            <div class="card-body">
+              <div class="quick-tips">
+                <h6 class="font-weight-bold mb-2">Quick Tips</h6>
+                <ul>
+                  <li><strong>Work Order:</strong> Each project must be linked to a Contract/Project classified work order.</li>
+                  <li><strong>Project Name:</strong> Use a clear, descriptive name that identifies the project purpose.</li>
+                  <li><strong>Dates:</strong> Setting start and end dates helps with planning, but you can adjust these later.</li>
+                  <li><strong>Tasks:</strong> After creating the project, you'll be able to add tasks and build your schedule.</li>
+                </ul>
+              </div>
+              
+              <div class="mt-4">
+                <a href="{{ url_for('projects') }}" class="btn btn-outline-secondary btn-block">Back to Projects</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="card">
+        <div class="card-body">
+          <div class="empty-state">
+            <i class="fas fa-clipboard-list"></i>
+            <h3>No Eligible Work Orders</h3>
+            <p class="text-muted">
+              There are no Contract/Project classified work orders available to create a project.
+              You need to create a work order with the "Contract/Project" classification first.
+            </p>
+            <a href="{{ url_for('new_work_order') }}" class="btn btn-primary">
+              <i class="fas fa-plus mr-1"></i> Create Work Order
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      // Set default date values to today and estimated end date
+      var today = new Date();
+      var estimatedEnd = new Date();
+      estimatedEnd.setMonth(estimatedEnd.getMonth() + 1); // Default to 1 month project
+      
+      // Format dates for the input elements
+      var formatDate = function(date) {
+        var dd = String(date.getDate()).padStart(2, '0');
+        var mm = String(date.getMonth() + 1).padStart(2, '0');
+        var yyyy = date.getFullYear();
+        return yyyy + '-' + mm + '-' + dd;
+      };
+      
+      document.getElementById('start_date').value = formatDate(today);
+      document.getElementById('end_date').value = formatDate(estimatedEnd);
+    });
+  </script>
+</body>
+</html>

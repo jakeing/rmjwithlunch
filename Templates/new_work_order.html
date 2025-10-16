@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Create New Work Order - RMJ Dashboard</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    /* Navbar */
+    .navbar { background-color: #ffffff; }
+    .navbar-brand img { height: 40px; }
+    .dropdown-menu { border-radius: .35rem; }
+
+    /* Full-width container */
+    .container-fluid { max-width: 100%; padding: 0 0.5rem; }
+
+    /* Card styling */
+    .card {
+      border-radius: .35rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      margin-bottom: 1.5rem;
+    }
+    .card-header {
+      background-color: #f8f9fa;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    }
+    
+    /* Form styling */
+    .form-control {
+      border-radius: .25rem;
+    }
+    .form-control:focus {
+      border-color: #80bdff;
+      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+    
+    label {
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+      color: #495057;
+    }
+    
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+    
+    /* Button improvements */
+    .btn {
+      border-radius: .25rem;
+      font-weight: 500;
+    }
+    .btn-success {
+      background-color: #28a745;
+      border-color: #28a745;
+    }
+    .btn-success:hover {
+      background-color: #218838;
+      border-color: #1e7e34;
+    }
+    .btn-secondary {
+      background-color: #6c757d;
+      border-color: #6c757d;
+    }
+    .btn-secondary:hover {
+      background-color: #5a6268;
+      border-color: #545b62;
+    }
+    
+    /* Sticky header for mobile */
+    .sticky-top {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    
+    /* Mobile-specific styles */
+    @media (max-width: 767px) {
+      .mobile-p-0 { padding: 0 !important; }
+      .mobile-p-1 { padding: 0.25rem !important; }
+      
+      /* Fix navbar on mobile */
+      .navbar-collapse {
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+    }
+    
+    /* Error alert styling */
+    .alert-danger {
+      border-radius: .25rem;
+      border-left: 4px solid #dc3545;
+    }
+    
+    /* Form layout */
+    .form-content {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    /* Section dividers */
+    .section-divider {
+      border-top: 1px solid #e9ecef;
+      margin: 1.5rem 0;
+    }
+    
+    /* Required field indicator */
+    .required-field::after {
+      content: "*";
+      color: #dc3545;
+      margin-left: 0.25rem;
+    }
+    
+    /* Form sections */
+    .form-section {
+      margin-bottom: 1rem;
+    }
+    
+    .form-section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #495057;
+      margin-bottom: 1rem;
+    }
+    
+    /* Help text */
+    .form-text {
+      color: #6c757d;
+      font-size: 0.875rem;
+    }
+    
+    /* Card footer */
+    .card-footer {
+      background-color: #f8f9fa;
+      border-top: 1px solid rgba(0, 0, 0, 0.125);
+      padding: 1rem 1.25rem;
+    }
+    
+    /* Quick tips card */
+    .quick-tips {
+      background-color: #e9f7fe;
+      border-left: 4px solid #3498db;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      border-radius: .25rem;
+    }
+    
+    .quick-tips ul {
+      padding-left: 1.5rem;
+      margin-bottom: 0;
+    }
+    
+    .quick-tips li {
+      margin-bottom: 0.5rem;
+    }
+    
+    .quick-tips li:last-child {
+      margin-bottom: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top py-2">
+    <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+      <img src="{{ url_for('static', filename='RMJ logo.png') }}" alt="RMJ Logo" class="mr-2">
+      <span class="h5 mb-0 d-none d-sm-inline">RMJ Dashboard</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav mr-auto">
+        <!-- Work Orders -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="woDropdown" role="button" data-toggle="dropdown">Work Orders</a>
+          <div class="dropdown-menu" aria-labelledby="woDropdown">
+            <a class="dropdown-item" href="{{ url_for('index') }}">Open</a>
+            <a class="dropdown-item" href="{{ url_for('completed_work_orders') }}">Completed</a>
+            <a class="dropdown-item" href="{{ url_for('closed_work_orders') }}">Closed</a>
+          </div>
+        </li>
+        <!-- Projects - New Section -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="projectsDropdown" role="button" data-toggle="dropdown">Projects</a>
+          <div class="dropdown-menu" aria-labelledby="projectsDropdown">
+            <a class="dropdown-item" href="{{ url_for('projects') }}">All Projects</a>
+            <a class="dropdown-item" href="{{ url_for('new_project') }}">New Project</a>
+          </div>
+        </li>
+        <!-- Timesheets -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="tsDropdown" role="button" data-toggle="dropdown">Timesheets</a>
+          <div class="dropdown-menu" aria-labelledby="tsDropdown">
+            <a class="dropdown-item" href="{{ url_for('new_timesheet') }}">New Entry</a>
+            <a class="dropdown-item" href="{{ url_for('select_weekly_timesheet') }}">Select Weekly</a>
+            <a class="dropdown-item" href="/workorder/reassign_entries">Reassign Entries</a>
+          </div>
+        </li>
+        <!-- Actions -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="actionsDropdown" role="button" data-toggle="dropdown">Actions</a>
+          <div class="dropdown-menu" aria-labelledby="actionsDropdown">
+            <a class="dropdown-item" href="{{ url_for('new_work_order') }}">Create WO</a>
+            <a class="dropdown-item" href="{{ url_for('import_excel') }}">Import Excel</a>
+            <a class="dropdown-item" href="{{ url_for('export_excel') }}">Export Excel</a>
+          </div>
+        </li>
+        <!-- Admin -->
+        {% if session.get('user_id') and (User.query.get(session.get('user_id')).role.lower() == 'admin' or User.query.get(session.get('user_id')).username.lower() == 'admin') %}
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-toggle="dropdown">Admin</a>
+          <div class="dropdown-menu" aria-labelledby="adminDropdown">
+            <a class="dropdown-item" href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+            <a class="dropdown-item" href="{{ url_for('admin_users') }}">User Mgmt</a>
+            <a class="dropdown-item" href="{{ url_for('admin_import_time_entries') }}">Import Time</a>
+            <a class="dropdown-item" href="{{ url_for('admin_email_settings') }}">Notifications</a>
+          </div>
+        </li>
+        {% endif %}
+      </ul>
+      <!-- Search inputs -->
+      <div class="d-flex flex-column flex-md-row">
+        <!-- Search all work orders -->
+        <form class="form-inline my-2 my-lg-0" action="{{ url_for('search') }}" method="get">
+          <input type="hidden" name="status" value="all">
+          <div class="input-group input-group-sm">
+            <input class="form-control form-control-sm" name="query" type="search" placeholder="Search All WOs" aria-label="Search All">
+            <div class="input-group-append">
+              <button class="btn btn-outline-primary btn-sm" type="submit">Search</button>
+            </div>
+          </div>
+        </form>
+      </div>
+      <ul class="navbar-nav ml-md-3 mt-2 mt-md-0">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container-fluid mt-4">
+    <div class="form-content">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h2 mb-0">Create New Work Order</h1>
+      </div>
+      
+      {% if error %}
+        <div class="alert alert-danger">
+          <strong>Error:</strong> {{ error }}
+        </div>
+      {% endif %}
+      
+      <div class="row">
+        <div class="col-lg-8">
+          <!-- Main form card -->
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">Work Order Details</h5>
+            </div>
+            <div class="card-body">
+              <form method="POST">
+                <!-- Identification Section -->
+                <div class="form-section">
+                  <div class="form-section-title">Identification</div>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="customer_work_order_number">Customer Work Order Number:</label>
+                        <input type="text" id="customer_work_order_number" name="customer_work_order_number" class="form-control">
+                        <small class="form-text text-muted">Reference number from the customer</small>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="rmj_job_number" class="required-field">RMJ Job Number:</label>
+                        <input type="text" id="rmj_job_number" name="rmj_job_number" class="form-control" required>
+                        <small class="form-text text-muted">Unique identifier for this work order</small>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="description" class="required-field">Description:</label>
+                    <input type="text" id="description" name="description" class="form-control" required>
+                    <small class="form-text text-muted">Brief description of the work to be performed</small>
+                  </div>
+                </div>
+                
+                <!-- Status Section -->
+                <div class="section-divider"></div>
+                <div class="form-section">
+                  <div class="form-section-title">Status & Assignment</div>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="status" class="required-field">Status:</label>
+                        <select id="status" name="status" class="form-control" required>
+                          <option value="Open" selected>Open</option>
+                          <option value="Closed">Closed</option>
+                          <option value="Complete">Complete</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="owner">Owner:</label>
+                        <input type="text" id="owner" name="owner" class="form-control">
+                        <small class="form-text text-muted">Customer this work order is for</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Details Section -->
+                <div class="section-divider"></div>
+                <div class="form-section">
+                  <div class="form-section-title">Details</div>
+                  <div class="row">
+                    <div class="col-md-4">
+                      <div class="form-group">
+                        <label for="estimated_hours">Estimated Hours:</label>
+                        <input type="number" step="0.1" id="estimated_hours" name="estimated_hours" class="form-control">
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="form-group">
+                        <label for="priority" class="required-field">Priority:</label>
+                        <select id="priority" name="priority" class="form-control" required>
+                          <option value="Low">Low</option>
+                          <option value="Medium" selected>Medium</option>
+                          <option value="High">High</option>
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label for="classification" class="required-field">Classification:</label>
+                        <select id="classification" name="classification" class="form-control" required>
+                          <option value="Contract/Project">Contract/Project</option>
+                          <option value="Billable" selected>Billable</option>
+                          <option value="Non-Billable">Non-Billable</option>
+                        </select>
+                        <small class="form-text text-muted">Categorizes this work order for billing and reporting purposes</small>
+                      </div>
+                      {% if session.get('user_id') and (User.query.get(session.get('user_id')).role.lower() == 'admin' or User.query.get(session.get('user_id')).username.lower() == 'admin') %}
+                      <div class="form-group">
+                        <div class="form-check">
+                          <input type="checkbox" name="approved_for_work" class="form-check-input" value="1">
+                          <label class="form-check-label">
+                            Approved for Work
+                          </label>
+                        </div>
+                      </div>
+                      {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                      <div class="form-group">
+                        <label for="location">Location:</label>
+                        <input type="text" id="location" name="location" class="form-control">
+                      </div>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="scheduled_date">Scheduled Date:</label>
+                    <input type="date" id="scheduled_date" name="scheduled_date" class="form-control">
+                    <small class="form-text text-muted">When this work is scheduled to be performed</small>
+                  </div>
+                </div>
+                
+                <div class="form-group mb-0">
+                  <button type="submit" class="btn btn-success btn-lg">Create Work Order</button>
+                  <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-lg-4">
+          <!-- Quick Tips Card -->
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">Work Order Tips</h5>
+            </div>
+            <div class="card-body">
+              <div class="quick-tips">
+                <h6 class="font-weight-bold mb-2">Quick Tips</h6>
+                <ul>
+                  <li>The <strong>RMJ Job Number</strong> must be unique.</li>
+                  <li>Fields marked with <span class="text-danger">*</span> are required.</li>
+                  <li>Set <strong>Status</strong> to "Open" for new projects.</li>
+                  <li>Use <strong>Estimated Hours</strong> to track time budgets.</li>
+                  <li>Higher <strong>Priority</strong> work orders will appear first in dashboards.</li>
+                </ul>
+              </div>
+              
+              <div class="form-section-title">Status Explanation</div>
+              <p><strong>Open</strong>: Work that has not been completed</p>
+              <p><strong>Complete</strong>: Work that is finished but not yet closed</p>
+              <p><strong>Closed</strong>: Work that is finished and administratively complete</p>
+              
+              <div class="mt-4">
+                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-block">Back to Dashboard</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

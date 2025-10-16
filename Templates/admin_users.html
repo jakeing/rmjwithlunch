@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Admin - User Management - RMJ Dashboard</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+  <style>
+    /* Navbar */
+    .navbar { background-color: #ffffff; }
+    .navbar-brand img { height: 40px; }
+    .dropdown-menu { border-radius: .35rem; }
+
+    /* Full-width container */
+    .container-fluid { max-width: 100%; padding: 0 0.5rem; }
+
+    /* Card styling */
+    .card {
+      border-radius: .35rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      margin-bottom: 1.5rem;
+    }
+    .card-header {
+      background-color: #f8f9fa;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    }
+    
+    /* Table styling */
+    .table-responsive { overflow-x: auto; }
+    .table { width: 100%; table-layout: auto; }
+    .table-hover tbody tr:hover { background-color: #f8f9fa; }
+    .table thead th {
+      font-size: .85rem;
+      vertical-align: middle;
+      text-align: center;
+      white-space: nowrap;
+      padding: .5rem;
+      position: sticky;
+      top: 0;
+      background-color: #f8f9fa;
+      z-index: 1;
+      font-weight: 600;
+    }
+    .table tbody td {
+      vertical-align: middle;
+      padding: .5rem;
+      font-size: .9rem;
+    }
+    
+    /* Form styling */
+    .form-control {
+      border-radius: .25rem;
+      font-size: 0.9rem;
+    }
+    .form-control:focus {
+      border-color: #80bdff;
+      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+    
+    label {
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+      color: #495057;
+    }
+    
+    /* Button improvements */
+    .btn-sm {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      border-radius: .2rem;
+    }
+    
+    /* Sticky header for mobile */
+    .sticky-top {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    
+    /* Mobile-specific styles */
+    @media (max-width: 767px) {
+      .mobile-p-0 { padding: 0 !important; }
+      .mobile-p-1 { padding: 0.25rem !important; }
+      
+      /* Maintain table structure on mobile */
+      .table { min-width: 800px; } /* Ensures all columns are visible but user can scroll */
+      
+      /* Fix navbar on mobile */
+      .navbar-collapse {
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+    }
+    
+    /* Mobile scroll hint */
+    .scroll-hint {
+      display: none;
+      text-align: center;
+      padding: 0.5rem;
+      color: #666;
+      font-style: italic;
+    }
+    
+    @media (max-width: 767px) {
+      .scroll-hint {
+        display: block;
+      }
+    }
+    
+    /* Admin title bar */
+    .admin-title-bar {
+      background-color: #343a40;
+      color: white;
+      padding: 0.5rem 1rem;
+      margin-bottom: 1rem;
+      border-radius: .25rem;
+    }
+    
+    /* User badge indicators */
+    .user-badge {
+      display: inline-block;
+      padding: 0.35em 0.65em;
+      font-size: 0.75em;
+      font-weight: 600;
+      line-height: 1;
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: baseline;
+      border-radius: 0.25rem;
+    }
+    
+    .user-badge-admin {
+      background-color: #dc3545;
+      color: white;
+    }
+    
+    .user-badge-user {
+      background-color: #6c757d;
+      color: white;
+    }
+    
+    /* Action buttons */
+    .action-buttons .btn {
+      margin-right: 0.25rem;
+    }
+    
+    /* Add user section */
+    .add-user-section {
+      background-color: #f8f9fa;
+      border-radius: .25rem;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    /* New quick-add user form */
+    .quick-add-user {
+      display: none;
+      background-color: #fff;
+      border: 1px solid #dee2e6;
+      border-radius: .25rem;
+      padding: 1rem;
+      margin-top: 1rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    /* Password strength indicator */
+    .password-strength {
+      height: 5px;
+      border-radius: 5px;
+      margin-top: 5px;
+      transition: all 0.3s ease;
+    }
+    
+    .strength-weak { background-color: #dc3545; width: 30%; }
+    .strength-medium { background-color: #ffc107; width: 60%; }
+    .strength-strong { background-color: #28a745; width: 100%; }
+    
+    /* Tab styling */
+    .nav-tabs .nav-link {
+      border: 1px solid transparent;
+      border-top-left-radius: 0.25rem;
+      border-top-right-radius: 0.25rem;
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+    
+    .nav-tabs .nav-link.active {
+      color: #495057;
+      background-color: #fff;
+      border-color: #dee2e6 #dee2e6 #fff;
+    }
+    
+    /* Loading spinner */
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .spinner-border {
+      width: 3rem;
+      height: 3rem;
+    }
+    
+    /* Tooltip styling */
+    .tooltip-inner {
+      max-width: 200px;
+      padding: 0.5rem;
+      color: #fff;
+      background-color: #000;
+      border-radius: 0.25rem;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top py-2">
+    <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+      <img src="{{ url_for('static', filename='RMJ logo.png') }}" alt="RMJ Logo" class="mr-2">
+      <span class="h5 mb-0 d-none d-sm-inline">RMJ Dashboard</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav mr-auto">
+        <!-- Work Orders -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="woDropdown" role="button" data-toggle="dropdown">Work Orders</a>
+          <div class="dropdown-menu" aria-labelledby="woDropdown">
+            <a class="dropdown-item" href="{{ url_for('index') }}">Open</a>
+            <a class="dropdown-item" href="{{ url_for('completed_work_orders') }}">Completed</a>
+            <a class="dropdown-item" href="{{ url_for('closed_work_orders') }}">Closed</a>
+          </div>
+        </li>
+        <!-- Projects - New Section -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="projectsDropdown" role="button" data-toggle="dropdown">Projects</a>
+          <div class="dropdown-menu" aria-labelledby="projectsDropdown">
+            <a class="dropdown-item" href="{{ url_for('projects') }}">All Projects</a>
+            <a class="dropdown-item" href="{{ url_for('new_project') }}">New Project</a>
+          </div>
+        </li>
+        <!-- Timesheets -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="tsDropdown" role="button" data-toggle="dropdown">Timesheets</a>
+          <div class="dropdown-menu" aria-labelledby="tsDropdown">
+            <a class="dropdown-item" href="{{ url_for('new_timesheet') }}">New Entry</a>
+            <a class="dropdown-item" href="{{ url_for('select_weekly_timesheet') }}">Select Weekly</a>
+            <a class="dropdown-item" href="/workorder/reassign_entries">Reassign Entries</a>
+          </div>
+        </li>
+        <!-- Actions -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="actionsDropdown" role="button" data-toggle="dropdown">Actions</a>
+          <div class="dropdown-menu" aria-labelledby="actionsDropdown">
+            <a class="dropdown-item" href="{{ url_for('new_work_order') }}">Create WO</a>
+            <a class="dropdown-item" href="{{ url_for('import_excel') }}">Import Excel</a>
+            <a class="dropdown-item" href="{{ url_for('export_excel') }}">Export Excel</a>
+          </div>
+        </li>
+        <!-- Admin -->
+        {% if session.get('user_id') and (User.query.get(session.get('user_id')).role.lower() == 'admin' or User.query.get(session.get('user_id')).username.lower() == 'admin') %}
+        <li class="nav-item dropdown active">
+          <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-toggle="dropdown">Admin</a>
+          <div class="dropdown-menu" aria-labelledby="adminDropdown">
+            <a class="dropdown-item" href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+            <a class="dropdown-item" href="{{ url_for('admin_users') }}">User Mgmt</a>
+            <a class="dropdown-item" href="{{ url_for('admin_import_time_entries') }}">Import Time</a>
+            <a class="dropdown-item" href="{{ url_for('admin_email_settings') }}">Notifications</a>
+          </div>
+        </li>
+        {% endif %}
+      </ul>
+      <!-- Search inputs -->
+      <div class="d-flex flex-column flex-md-row">
+        <!-- Search all work orders -->
+        <form class="form-inline my-2 my-lg-0" action="{{ url_for('search') }}" method="get">
+          <input type="hidden" name="status" value="all">
+          <div class="input-group input-group-sm">
+            <input class="form-control form-control-sm" name="query" type="search" placeholder="Search All WOs" aria-label="Search All">
+            <div class="input-group-append">
+              <button class="btn btn-outline-primary btn-sm" type="submit">Search</button>
+            </div>
+          </div>
+        </form>
+      </div>
+      <ul class="navbar-nav ml-md-3 mt-2 mt-md-0">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container-fluid mt-3">
+    <div class="admin-title-bar d-flex justify-content-between align-items-center">
+      <h1 class="h3 mb-0">User Management</h1>
+      <span class="badge badge-light">Admin Panel</span>
+    </div>
+    
+    <div class="row">
+      <div class="col-lg-8">
+        <!-- Quick Add User Form -->
+        <div class="add-user-section">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h5 mb-0">Quick Add User</h2>
+            <button id="toggle-quick-add" class="btn btn-sm btn-primary">
+              <i class="fas fa-plus mr-1"></i> Show Form
+            </button>
+          </div>
+          
+          <div id="quick-add-form" class="quick-add-user">
+            <form id="user-form" action="{{ url_for('admin_new_user') }}" method="POST">
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username" class="form-control" required>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" class="form-control" required>
+                    <div id="password-strength" class="password-strength"></div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label for="role">Role:</label>
+                    <select id="role" name="role" class="form-control" required>
+                      <option value="user" selected>User</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group mb-0">
+                <button type="submit" class="btn btn-success">
+                  <i class="fas fa-user-plus mr-1"></i> Create User
+                </button>
+                <button type="button" id="cancel-quick-add" class="btn btn-secondary">
+                  <i class="fas fa-times mr-1"></i> Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+        <!-- Users Table -->
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0">Manage Existing Users</h2>
+            <div>
+              <input type="text" id="user-search" class="form-control form-control-sm" placeholder="Search users...">
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="scroll-hint">Scroll horizontally to see all columns →</div>
+            
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for user in users %}
+                    <tr>
+                      <td class="text-center">{{ user.id }}</td>
+                      <td>
+                        {{ user.username }}
+                        {% if user.username.lower() == 'admin' %}
+                          <i class="fas fa-crown text-warning ml-1" data-toggle="tooltip" title="Primary Admin Account"></i>
+                        {% endif %}
+                      </td>
+                      <td>{{ user.full_name }}</td>
+                      <td class="text-center">
+                        <!-- Role Display and Update -->
+                        <form action="{{ url_for('admin_update_user_role', user_id=user.id) }}" method="POST" class="form-inline justify-content-center">
+                          <div class="input-group input-group-sm">
+                            <select name="role" class="form-control form-control-sm" {% if user.username.lower() == 'admin' %}disabled{% endif %}>
+                              <option value="user" {% if user.role.lower() == 'user' %}selected{% endif %}>User</option>
+                              <option value="admin" {% if user.role.lower() == 'admin' %}selected{% endif %}>Admin</option>
+                            </select>
+                            {% if user.username.lower() != 'admin' %}
+                              <div class="input-group-append">
+                                <button type="submit" class="btn btn-sm btn-primary">
+                                  <i class="fas fa-sync-alt"></i>
+                                </button>
+                              </div>
+                            {% endif %}
+                          </div>
+                        </form>
+                      </td>
+                      <td class="text-center">
+                        <div class="action-buttons">
+                          <a href="{{ url_for('admin_edit_user', user_id=user.id) }}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-edit"></i> Edit
+                          </a>
+                          {% if user.username.lower() != 'admin' %}
+                            <form action="{{ url_for('admin_delete_user', user_id=user.id) }}" method="POST" style="display: inline-block;">
+                              <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete user {{ user.username }}?');">
+                                <i class="fas fa-trash-alt"></i> Delete
+                              </button>
+                            </form>
+                          {% else %}
+                            <button class="btn btn-sm btn-secondary" disabled>
+                              <i class="fas fa-lock"></i> Protected
+                            </button>
+                          {% endif %}
+                        </div>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-lg-4">
+        <!-- Admin Quick Actions -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="h5 mb-0">Admin Actions</h2>
+          </div>
+          <div class="card-body">
+            <div class="d-grid gap-2">
+              <a href="{{ url_for('admin_new_user') }}" class="btn btn-primary btn-block mb-2">
+                <i class="fas fa-user-plus mr-1"></i> Full User Creation Form
+              </a>
+              <a href="{{ url_for('admin_changelog') }}" class="btn btn-info btn-block mb-2">
+                <i class="fas fa-history mr-1"></i> View Change Log
+              </a>
+              <a href="{{ url_for('index') }}" class="btn btn-secondary btn-block">
+                <i class="fas fa-home mr-1"></i> Back to Dashboard
+              </a>
+            </div>
+            
+            <hr>
+            
+            <h3 class="h6 font-weight-bold mt-3">User Management Tips</h3>
+            <ul class="small">
+              <li>The admin account cannot be deleted or have its role changed.</li>
+              <li>Create separate accounts for each team member.</li>
+              <li>Use strong, unique passwords for all accounts.</li>
+              <li>Regularly review the change log to monitor system activity.</li>
+            </ul>
+          </div>
+        </div>
+        
+        <!-- User Role Information -->
+        <div class="card mt-3">
+          <div class="card-header">
+            <h2 class="h5 mb-0">Role Permissions</h2>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <h3 class="h6 font-weight-bold">Admin</h3>
+              <p class="small mb-0">Full system access including user management, importing time entries, and system settings.</p>
+            </div>
+            <div>
+              <h3 class="h6 font-weight-bold">User</h3>
+              <p class="small mb-0">Standard access to work orders and timesheets. Cannot access admin features.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="spinner-border text-light" role="status">
+      <span class="sr-only">Loading...</span>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      // Initialize tooltips
+      $('[data-toggle="tooltip"]').tooltip();
+      
+      // Quick add user toggle
+      $('#toggle-quick-add').click(function() {
+        $('#quick-add-form').slideToggle();
+        
+        // Toggle button text
+        var $button = $(this);
+        if ($button.html().indexOf('Show') >= 0) {
+          $button.html('<i class="fas fa-minus mr-1"></i> Hide Form');
+        } else {
+          $button.html('<i class="fas fa-plus mr-1"></i> Show Form');
+        }
+      });
+      
+      // Cancel button for quick add
+      $('#cancel-quick-add').click(function() {
+        $('#quick-add-form').slideUp();
+        $('#toggle-quick-add').html('<i class="fas fa-plus mr-1"></i> Show Form');
+        $('#user-form').trigger('reset');
+        $('#password-strength').removeClass('strength-weak strength-medium strength-strong');
+      });
+      
+      // Password strength indicator
+      $('#password').on('input', function() {
+        var password = $(this).val();
+        var $indicator = $('#password-strength');
+        
+        // Reset classes
+        $indicator.removeClass('strength-weak strength-medium strength-strong');
+        
+        if (password.length === 0) {
+          return;
+        }
+        
+        // Simple strength check
+        if (password.length < 6) {
+          $indicator.addClass('strength-weak');
+        } else if (password.length < 10 || !/[^a-zA-Z0-9]/.test(password)) {
+          $indicator.addClass('strength-medium');
+        } else {
+          $indicator.addClass('strength-strong');
+        }
+      });
+      
+      // User search functionality
+      $('#user-search').on('input', function() {
+        var searchText = $(this).val().toLowerCase();
+        $('table tbody tr').each(function() {
+          var rowText = $(this).text().toLowerCase();
+          if (rowText.indexOf(searchText) > -1) {
+            $(this).show();
+          } else {
+            $(this).hide();
+          }
+        });
+      });
+      
+      // Show loading overlay on form submit
+      $('#user-form, form[action*="delete_user"], form[action*="update_user_role"]').submit(function() {
+        $('#loading-overlay').css('display', 'flex');
+      });
+    });
+  </script>
+</body>
+</html>

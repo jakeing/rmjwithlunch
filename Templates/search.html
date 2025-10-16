@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Search Results - RMJ Dashboard</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+  <style>
+    /* Navbar */
+    .navbar { background-color: #ffffff; }
+    .navbar-brand img { height: 40px; }
+    .dropdown-menu { border-radius: .35rem; }
+
+    /* Full-width container */
+    .container-fluid { max-width: 100%; padding: 0 0.5rem; }
+
+    /* Card styling */
+    .card {
+      border-radius: .35rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      margin-bottom: 1.5rem;
+    }
+    .card-header {
+      background-color: #f8f9fa;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    }
+    
+    /* Table styling */
+    .table-responsive { overflow-x: auto; }
+    .table { width: 100%; table-layout: auto; }
+    .table-hover tbody tr:hover { background-color: #f8f9fa; }
+    .table thead th {
+      font-size: .85rem;
+      vertical-align: middle;
+      text-align: center;
+      white-space: nowrap;
+      padding: .4rem .3rem;
+      position: sticky;
+      top: 0;
+      background-color: #f8f9fa;
+      z-index: 1;
+    }
+    .table tbody td {
+      vertical-align: middle;
+      padding: .4rem .3rem;
+      font-size: .9rem;
+    }
+
+    /* Description clamp to 3 lines */
+    .description-container {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 3;
+      overflow: hidden;
+      word-break: break-word;
+      transition: all 0.3s ease;
+    }
+    .description-container.expanded {
+      -webkit-line-clamp: unset;
+      display: block;
+    }
+    
+    /* Sticky header for mobile */
+    .sticky-top {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    
+    /* Mobile-specific styles */
+    @media (max-width: 767px) {
+      .mobile-p-0 { padding: 0 !important; }
+      .mobile-p-1 { padding: 0.25rem !important; }
+      
+      /* Maintain table structure on mobile */
+      .table { min-width: 1200px; } /* Ensures all columns are visible but user can scroll */
+      
+      /* Improved touch targets */
+      .btn-sm {
+        padding: 0.3rem 0.4rem;
+        font-size: 0.875rem;
+      }
+      
+      /* Ensure search inputs are usable on mobile */
+      .form-inline .form-control {
+        display: inline-block;
+        width: auto;
+        vertical-align: middle;
+        margin-bottom: 0.5rem;
+      }
+      
+      /* Fix navbar on mobile */
+      .navbar-collapse {
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+    }
+    
+    /* Improve password input for delete actions */
+    .delete-pwd-field {
+      width: 60px;
+      display: inline-block;
+    }
+    
+    /* Mobile scroll hint */
+    .scroll-hint {
+      display: none;
+      text-align: center;
+      padding: 0.5rem;
+      color: #666;
+      font-style: italic;
+    }
+    
+    @media (max-width: 767px) {
+      .scroll-hint {
+        display: block;
+      }
+    }
+    
+    /* Action buttons styling */
+    .action-btn { 
+      margin-right: 5px; 
+    }
+    
+    /* Search highlight styling */
+    .search-highlight {
+      position: relative;
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: #495057;
+      background-color: #f8f9fa;
+      border-radius: 0.25rem;
+      border-left: 4px solid #007bff;
+    }
+    
+    /* Status indicators */
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border-radius: 0.25rem;
+    }
+    .status-Open {
+      background-color: #cff4fc;
+      color: #055160;
+    }
+    .status-Closed {
+      background-color: #f8d7da;
+      color: #842029;
+    }
+    .status-Complete {
+      background-color: #d1e7dd;
+      color: #0f5132;
+    }
+    
+    /* Hours remaining styling */
+    .hours-negative {
+      color: #dc3545;
+      font-weight: 600;
+    }
+    
+    /* Delete confirmation modal */
+    .modal-content {
+      border-radius: 0.35rem;
+      border: none;
+    }
+    .modal-header {
+      background-color: #f8f9fa;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top py-2">
+    <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+      <img src="{{ url_for('static', filename='RMJ logo.png') }}" alt="RMJ Logo" class="mr-2">
+      <span class="h5 mb-0 d-none d-sm-inline">RMJ Dashboard</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav mr-auto">
+        <!-- Work Orders -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="woDropdown" role="button" data-toggle="dropdown">Work Orders</a>
+          <div class="dropdown-menu" aria-labelledby="woDropdown">
+            <a class="dropdown-item" href="{{ url_for('index') }}">Open</a>
+            <a class="dropdown-item" href="{{ url_for('completed_work_orders') }}">Completed</a>
+            <a class="dropdown-item" href="{{ url_for('closed_work_orders') }}">Closed</a>
+          </div>
+        </li>
+        <!-- Projects - New Section -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="projectsDropdown" role="button" data-toggle="dropdown">Projects</a>
+          <div class="dropdown-menu" aria-labelledby="projectsDropdown">
+            <a class="dropdown-item" href="{{ url_for('projects') }}">All Projects</a>
+            <a class="dropdown-item" href="{{ url_for('new_project') }}">New Project</a>
+          </div>
+        </li>
+        <!-- Timesheets -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="tsDropdown" role="button" data-toggle="dropdown">Timesheets</a>
+          <div class="dropdown-menu" aria-labelledby="tsDropdown">
+            <a class="dropdown-item" href="{{ url_for('new_timesheet') }}">New Entry</a>
+            <a class="dropdown-item" href="{{ url_for('select_weekly_timesheet') }}">Select Weekly</a>
+            <a class="dropdown-item" href="/workorder/reassign_entries">Reassign Entries</a>
+          </div>
+        </li>
+        <!-- Actions -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="actionsDropdown" role="button" data-toggle="dropdown">Actions</a>
+          <div class="dropdown-menu" aria-labelledby="actionsDropdown">
+            <a class="dropdown-item" href="{{ url_for('new_work_order') }}">Create WO</a>
+            <a class="dropdown-item" href="{{ url_for('import_excel') }}">Import Excel</a>
+            <a class="dropdown-item" href="{{ url_for('export_excel') }}">Export Excel</a>
+          </div>
+        </li>
+        <!-- Admin -->
+        {% if session.get('user_id') and (User.query.get(session.get('user_id')).role.lower() == 'admin' or User.query.get(session.get('user_id')).username.lower() == 'admin') %}
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-toggle="dropdown">Admin</a>
+          <div class="dropdown-menu" aria-labelledby="adminDropdown">
+            <a class="dropdown-item" href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+            <a class="dropdown-item" href="{{ url_for('admin_users') }}">User Mgmt</a>
+            <a class="dropdown-item" href="{{ url_for('admin_import_time_entries') }}">Import Time</a>
+            <a class="dropdown-item" href="{{ url_for('admin_email_settings') }}">Notifications</a>
+          </div>
+        </li>
+        {% endif %}
+      </ul>
+      <!-- Search inputs -->
+      <div class="d-flex flex-column flex-md-row">
+        <!-- Search all work orders -->
+        <form class="form-inline my-2 my-lg-0" action="{{ url_for('search') }}" method="get">
+          <input type="hidden" name="status" value="all">
+          <div class="input-group input-group-sm">
+            <input class="form-control form-control-sm" name="query" type="search" placeholder="Search All WOs" aria-label="Search All" value="{{ query }}">
+            <div class="input-group-append">
+              <button class="btn btn-outline-primary btn-sm" type="submit">Search</button>
+            </div>
+          </div>
+        </form>
+      </div>
+      <ul class="navbar-nav ml-md-3 mt-2 mt-md-0">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container-fluid mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h1 class="h2 mb-0">Search Results</h1>
+      <div class="search-highlight">
+        <i class="fas fa-search mr-2"></i>Query: "{{ query }}"
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+          {% if source_page == 'index' %}
+            <i class="fas fa-folder-open mr-2"></i>Open Work Orders
+          {% elif source_page == 'closed' %}
+            <i class="fas fa-folder mr-2"></i>Closed Work Orders
+          {% elif source_page == 'completed' %}
+            <i class="fas fa-check-circle mr-2"></i>Completed Work Orders
+          {% else %}
+            <i class="fas fa-folder mr-2"></i>All Work Orders
+          {% endif %}
+        </h5>
+        <span class="badge badge-primary">{{ results|length }} result(s) found</span>
+      </div>
+      
+      <div class="card-body">
+        {% if results %}
+          <div class="scroll-hint mb-3">Scroll horizontally to see all columns →</div>
+          <div class="table-responsive">
+            <table class="table table-hover table-bordered">
+              <thead class="thead-light">
+                <tr>
+                  <th>ID</th>
+                  <th>Customer WO #</th>
+                  <th>RMJ Job #</th>
+                  <th style="min-width:200px;">Description</th>
+                  <th>Status</th>
+                  <th>Owner</th>
+                  <th>Est. Hours</th>
+                  <th>Hours Logged</th>
+                  <th>Hours Remaining</th>
+                  <th>Priority</th>
+                  <th>Location</th>
+                  <th>Scheduled Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for wo in results %}
+                  <tr>
+                    <td class="text-center">{{ wo.id }}</td>
+                    <td class="text-center">{{ wo.customer_work_order_number }}</td>
+                    <td class="text-center">{{ wo.rmj_job_number }}</td>
+                    <td>
+                      <div id="desc-{{ wo.id }}" class="description-container">{{ wo.description }}</div>
+                      {% if wo.description|length > 100 %}
+                        <a href="javascript:void(0);" onclick="toggleDescription('{{ wo.id }}');" id="toggle-{{ wo.id }}" class="badge badge-secondary">Show more</a>
+                      {% endif %}
+                    </td>
+                    <td class="text-center">
+                      <span class="status-badge status-{{ wo.status }}">{{ wo.status }}</span>
+                    </td>
+                    <td class="text-center">{{ wo.owner }}</td>
+                    <td class="text-center">{{ wo.estimated_hours }}</td>
+                    <td class="text-center">{{ wo.hours_logged }}</td>
+                    <td class="text-center {% if wo.hours_remaining < 0 %}hours-negative{% endif %}">
+                      {{ wo.hours_remaining | round(2) }}
+                    </td>
+                    <td class="text-center">
+                      {% if wo.priority == 'High' %}
+                        <span class="badge badge-danger">{{ wo.priority }}</span>
+                      {% elif wo.priority == 'Medium' %}
+                        <span class="badge badge-warning">{{ wo.priority }}</span>
+                      {% else %}
+                        <span class="badge badge-info">{{ wo.priority }}</span>
+                      {% endif %}
+                    </td>
+                    <td class="text-center">{{ wo.location }}</td>
+                    <td class="text-center">{{ wo.scheduled_date.strftime('%Y-%m-%d') if wo.scheduled_date else '' }}</td>
+                    <td class="text-center">
+                      <div class="btn-group btn-group-sm">
+                        <a href="{{ url_for('work_order_detail', work_order_id=wo.id) }}" class="btn btn-sm btn-info">
+                          <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{{ url_for('edit_work_order', work_order_id=wo.id) }}" class="btn btn-sm btn-warning">
+                          <i class="fas fa-edit"></i>
+                        </a>
+                        <button type="button" class="btn btn-sm btn-danger" onclick="showDeleteModal('{{ wo.id }}', '{{ wo.rmj_job_number }}')">
+                          <i class="fas fa-trash-alt"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle mr-2"></i>No results found for "{{ query }}".
+          </div>
+        {% endif %}
+        
+        <div class="mt-4">
+          {% if source_page == 'index' %}
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">
+              <i class="fas fa-arrow-left mr-1"></i> Back to Dashboard
+            </a>
+          {% elif source_page == 'closed' %}
+            <a href="{{ url_for('closed_work_orders') }}" class="btn btn-secondary">
+              <i class="fas fa-arrow-left mr-1"></i> Back to Closed Work Orders
+            </a>
+          {% elif source_page == 'completed' %}
+            <a href="{{ url_for('completed_work_orders') }}" class="btn btn-secondary">
+              <i class="fas fa-arrow-left mr-1"></i> Back to Completed Work Orders
+            </a>
+          {% else %}
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">
+              <i class="fas fa-arrow-left mr-1"></i> Back to Dashboard
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Modal -->
+  <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to delete Work Order <span id="deleteWoNumber"></span>?</p>
+          <form id="deleteForm" method="POST">
+            <div class="form-group">
+              <label for="deletePassword">Password:</label>
+              <input type="password" name="password" id="deletePassword" class="form-control" required>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" onclick="submitDelete()">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function toggleDescription(id) {
+      var c = document.getElementById('desc-' + id);
+      var l = document.getElementById('toggle-' + id);
+      if (c.classList.contains('expanded')) {
+        c.classList.remove('expanded');
+        l.textContent = 'Show more';
+        l.classList.remove('badge-primary');
+        l.classList.add('badge-secondary');
+      } else {
+        c.classList.add('expanded');
+        l.textContent = 'Hide';
+        l.classList.remove('badge-secondary');
+        l.classList.add('badge-primary');
+      }
+    }
+    
+    function showDeleteModal(id, jobNumber) {
+      // Make sure id is not empty
+      if (!id || id.trim() === '') {
+        alert('Error: Missing work order ID');
+        return;
+      }
+      document.getElementById('deleteWoNumber').textContent = jobNumber;
+      document.getElementById('deleteForm').action = "{{ url_for('delete_work_order', work_order_id=0) }}".replace('0', id);
+      $('#deleteModal').modal('show');
+    }
+    
+    function submitDelete() {
+      // Validate form before submission
+      const form = document.getElementById('deleteForm');
+      const pwdField = document.getElementById('deletePassword');
+      
+      if (!pwdField.value || pwdField.value.trim() === '') {
+        alert('Please enter the delete password');
+        return;
+      }
+      
+      form.submit();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+<head>
+  <title>Admin - Change Log</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+  <div class="container mt-5">
+    <h1>Change Log</h1>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>User ID</th>
+          <th>Action</th>
+          <th>Object Type</th>
+          <th>Object ID</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+          <tr>
+            <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            <td>{{ log.user_id }}</td>
+            <td>{{ log.action }}</td>
+            <td>{{ log.object_type }}</td>
+            <td>{{ log.object_id }}</td>
+            <td>{{ log.description }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">Back to Admin Dashboard</a>
+  </div>
+</body>
+</html>

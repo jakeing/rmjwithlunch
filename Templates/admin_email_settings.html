@@ -1,0 +1,1155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Email Notification Settings - RMJ Dashboard</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+  <style>
+    /* Navbar */
+    .navbar { background-color: #ffffff; }
+    .navbar-brand img { height: 40px; }
+    .dropdown-menu { border-radius: .35rem; }
+
+    /* Full-width container */
+    .container-fluid { max-width: 100%; padding: 0 0.5rem; }
+
+    /* Card styling */
+    .card {
+      border-radius: .35rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      margin-bottom: 1.5rem;
+    }
+    .card-header {
+      background-color: #f8f9fa;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    }
+    
+    /* Form styling */
+    .form-control {
+      border-radius: .25rem;
+    }
+    .form-control:focus {
+      border-color: #80bdff;
+      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+    
+    /* Button improvements */
+    .btn {
+      border-radius: .25rem;
+      font-weight: 500;
+    }
+    .btn-primary {
+      background-color: #007bff;
+      border-color: #007bff;
+    }
+    .btn-primary:hover {
+      background-color: #0069d9;
+      border-color: #0062cc;
+    }
+    .btn-secondary {
+      background-color: #6c757d;
+      border-color: #6c757d;
+    }
+    .btn-secondary:hover {
+      background-color: #5a6268;
+      border-color: #545b62;
+    }
+    
+    /* Sticky header for mobile */
+    .sticky-top {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    
+    /* Admin title bar */
+    .admin-title-bar {
+      background-color: #343a40;
+      color: white;
+      padding: 0.5rem 1rem;
+      margin-bottom: 1rem;
+      border-radius: .25rem;
+    }
+    
+    /* Section dividers */
+    .section-divider {
+      border-top: 1px solid #e9ecef;
+      margin: 1.5rem 0;
+    }
+    
+    /* Form sections */
+    .form-section {
+      margin-bottom: 1rem;
+    }
+    
+    .form-section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #495057;
+      margin-bottom: 1rem;
+    }
+    
+    /* Notification type card */
+    .notification-card {
+      border: 1px solid #dee2e6;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      transition: all 0.3s ease;
+    }
+    
+    .notification-card.enabled {
+      border-left: 4px solid #28a745;
+      background-color: #f8f9fa;
+    }
+    
+    .notification-card.disabled {
+      opacity: 0.7;
+    }
+    
+    .notification-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    
+    .notification-title {
+      font-weight: 600;
+      margin-bottom: 0;
+    }
+    
+    .notification-options {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px dashed #dee2e6;
+    }
+    
+    /* Recipient pills */
+    .recipient-pill {
+      display: inline-block;
+      padding: 0.35em 0.65em;
+      margin: 0.2rem;
+      font-size: 0.85em;
+      font-weight: 500;
+      line-height: 1;
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: baseline;
+      border-radius: 0.25rem;
+      background-color: #e9ecef;
+      transition: all .2s ease-in-out;
+    }
+    
+    .recipient-pill .remove-recipient {
+      margin-left: 0.3rem;
+      color: #6c757d;
+      cursor: pointer;
+    }
+    
+    .recipient-pill .remove-recipient:hover {
+      color: #dc3545;
+    }
+    
+    /* Custom switch styling */
+    .custom-switch .custom-control-label {
+      padding-left: 0.5rem;
+    }
+    
+    /* Info tooltips */
+    .info-tooltip {
+      margin-left: 0.3rem;
+      color: #6c757d;
+      cursor: pointer;
+    }
+    
+    /* Email server card */
+    .server-info-card {
+      background-color: #f8f9fa;
+      padding: 1rem;
+      border-radius: 0.25rem;
+      margin-top: 1rem;
+    }
+    
+    .server-info-item {
+      margin-bottom: 0.5rem;
+    }
+    
+    .server-info-label {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    
+    /* Test email button */
+    .test-email-btn {
+      font-size: 0.875rem;
+    }
+    
+    /* Add recipient form */
+    .add-recipient-form {
+      display: flex;
+      margin-top: 0.5rem;
+    }
+    
+    .add-recipient-form .form-control {
+      width: auto;
+      flex-grow: 1;
+      margin-right: 0.5rem;
+    }
+    
+    /* Flash messages */
+    .alert {
+      border-radius: 0.35rem;
+      padding: 0.75rem 1.25rem;
+    }
+    
+    .alert-success {
+      background-color: #d1e7dd;
+      border-color: #badbcc;
+      color: #0f5132;
+    }
+    
+    /* Mobile responsiveness */
+    @media (max-width: 767px) {
+      .notification-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .notification-switch {
+        margin-top: 0.5rem;
+      }
+      
+      .add-recipient-form {
+        flex-direction: column;
+      }
+      
+      .add-recipient-form .form-control {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 0.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top py-2">
+    <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+      <img src="{{ url_for('static', filename='RMJ logo.png') }}" alt="RMJ Logo" class="mr-2">
+      <span class="h5 mb-0 d-none d-sm-inline">RMJ Dashboard</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav mr-auto">
+        <!-- Work Orders -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="woDropdown" role="button" data-toggle="dropdown">Work Orders</a>
+          <div class="dropdown-menu" aria-labelledby="woDropdown">
+            <a class="dropdown-item" href="{{ url_for('index') }}">Open</a>
+            <a class="dropdown-item" href="{{ url_for('completed_work_orders') }}">Completed</a>
+            <a class="dropdown-item" href="{{ url_for('closed_work_orders') }}">Closed</a>
+          </div>
+        </li>
+        <!-- Projects - New Section -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="projectsDropdown" role="button" data-toggle="dropdown">Projects</a>
+          <div class="dropdown-menu" aria-labelledby="projectsDropdown">
+            <a class="dropdown-item" href="{{ url_for('projects') }}">All Projects</a>
+            <a class="dropdown-item" href="{{ url_for('new_project') }}">New Project</a>
+          </div>
+        </li>
+        <!-- Timesheets -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="tsDropdown" role="button" data-toggle="dropdown">Timesheets</a>
+          <div class="dropdown-menu" aria-labelledby="tsDropdown">
+            <a class="dropdown-item" href="{{ url_for('new_timesheet') }}">New Entry</a>
+            <a class="dropdown-item" href="{{ url_for('select_weekly_timesheet') }}">Select Weekly</a>
+            <a class="dropdown-item" href="/workorder/reassign_entries">Reassign Entries</a>
+          </div>
+        </li>
+        <!-- Actions -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="actionsDropdown" role="button" data-toggle="dropdown">Actions</a>
+          <div class="dropdown-menu" aria-labelledby="actionsDropdown">
+            <a class="dropdown-item" href="{{ url_for('new_work_order') }}">Create WO</a>
+            <a class="dropdown-item" href="{{ url_for('import_excel') }}">Import Excel</a>
+            <a class="dropdown-item" href="{{ url_for('export_excel') }}">Export Excel</a>
+          </div>
+        </li>
+        <!-- Admin -->
+        {% if session.get('user_id') and (User.query.get(session.get('user_id')).role.lower() == 'admin' or User.query.get(session.get('user_id')).username.lower() == 'admin') %}
+        <li class="nav-item dropdown active">
+          <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-toggle="dropdown">Admin</a>
+          <div class="dropdown-menu" aria-labelledby="adminDropdown">
+            <a class="dropdown-item" href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+            <a class="dropdown-item" href="{{ url_for('admin_users') }}">User Mgmt</a>
+            <a class="dropdown-item" href="{{ url_for('admin_import_time_entries') }}">Import Time</a>
+            <a class="dropdown-item active" href="{{ url_for('admin_email_settings') }}">Notifications</a>
+          </div>
+        </li>
+        {% endif %}
+      </ul>
+      <ul class="navbar-nav ml-md-3 mt-2 mt-md-0">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container-fluid mt-4">
+    <div class="row justify-content-center">
+      <div class="col-xl-10">
+        <div class="admin-title-bar d-flex justify-content-between align-items-center">
+          <h1 class="h3 mb-0">Email Notification Settings</h1>
+          <span class="badge badge-light">Admin Panel</span>
+        </div>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        
+        <form method="POST" id="notificationForm">
+          <!-- Global Settings Card -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">Global Notification Settings</h5>
+            </div>
+            <div class="card-body">
+              <div class="custom-control custom-switch mb-3">
+                <input type="checkbox" class="custom-control-input" id="notification_enabled" name="notification_enabled" {% if notification_enabled %}checked{% endif %}>
+                <label class="custom-control-label" for="notification_enabled">Enable Email Notifications</label>
+              </div>
+              
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="default_notification_email">Default Notification Email:</label>
+                    <input type="email" class="form-control" id="default_notification_email" name="default_notification_email" value="{{ notification_email }}">
+                    <small class="form-text text-muted">Primary email for notifications when specific recipients aren't set.</small>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="sender_display_name">Sender Display Name:</label>
+                    <input type="text" class="form-control" id="sender_display_name" name="sender_display_name" value="RMJ Dashboard">
+                    <small class="form-text text-muted">Name that appears in recipients' inboxes.</small>
+                  </div>
+                </div>
+              </div>
+              
+              <button type="button" class="btn btn-sm btn-outline-primary test-email-btn">
+                <i class="fas fa-paper-plane mr-1"></i> Send Test Email
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-info ml-2" id="verify-email-btn">
+                <i class="fas fa-cog mr-1"></i> Verify Email Config
+              </button>
+            </div>
+          </div>
+          
+          <!-- Notification Types -->
+          <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">Notification Types</h5>
+              <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="collapse" data-target="#notificationTypesHelp">
+                <i class="fas fa-question-circle"></i> Help
+              </button>
+            </div>
+            
+            <div class="collapse" id="notificationTypesHelp">
+              <div class="card-body bg-light border-bottom">
+                <h6><i class="fas fa-info-circle mr-2"></i>About Notification Types</h6>
+                <p>Configure which events trigger email notifications and who receives them. For each notification type:</p>
+                <ul>
+                  <li>Toggle the switch to enable/disable that notification type</li>
+                  <li>Add one or more email recipients for each notification</li>
+                  <li>Set custom options specific to each notification type</li>
+                </ul>
+                <p class="mb-0"><strong>Note:</strong> If no recipients are specified for a notification type, emails will be sent to the default notification email.</p>
+              </div>
+            </div>
+            
+            <div class="card-body">
+              <!-- Report Upload Notification -->
+              <div class="notification-card {{ 'enabled' if settings.report_upload.enabled else 'disabled' }}" id="report-upload-card">
+                <div class="notification-header">
+                  <h6 class="notification-title">
+                    <i class="fas fa-file-upload mr-2"></i>Report Upload Notifications
+                    <span class="info-tooltip" data-toggle="tooltip" title="Sends an email when a report is uploaded to a work order">
+                      <i class="fas fa-info-circle"></i>
+                    </span>
+                  </h6>
+                  <div class="notification-switch">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input notification-toggle" 
+                            id="report_upload_enabled" name="report_upload_enabled" 
+                            {% if settings.report_upload.enabled %}checked{% endif %} 
+                            data-target="report-upload-options">
+                      <label class="custom-control-label" for="report_upload_enabled">Enable</label>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="notification-description">
+                  Notifies recipients when a new report is uploaded to any work order.
+                </div>
+                
+                <div class="notification-options" id="report-upload-options" {{ 'style="display:none"' if not settings.report_upload.enabled }}>
+                  <div class="form-group">
+                    <label>Recipients:</label>
+                    <div class="recipients-container" id="report-upload-recipients">
+                      {% if settings.report_upload.recipients %}
+                        {% for email in settings.report_upload.recipients %}
+                          <div class="recipient-pill">
+                            {{ email }}
+                            <i class="fas fa-times remove-recipient"></i>
+                            <input type="hidden" name="report_upload_recipients" value="{{ email }}">
+                          </div>
+                        {% endfor %}
+                      {% else %}
+                        <div class="recipient-pill">
+                          {{ notification_email }}
+                          <i class="fas fa-times remove-recipient"></i>
+                          <input type="hidden" name="report_upload_recipients" value="{{ notification_email }}">
+                        </div>
+                      {% endif %}
+                    </div>
+                    <div class="add-recipient-form">
+                      <input type="email" class="form-control form-control-sm" placeholder="Add recipient email">
+                      <button type="button" class="btn btn-sm btn-primary add-recipient-btn">
+                        <i class="fas fa-plus"></i> Add
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label for="report_keywords">Report Keywords:</label>
+                    <input type="text" class="form-control" id="report_keywords" name="report_keywords" value="{{ report_keywords }}">
+                    <small class="form-text text-muted">Comma-separated list of keywords that identify a file as a report (e.g., report,assessment,evaluation)</small>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Report Approval Notification -->
+              <div class="notification-card {{ 'enabled' if settings.report_approval.enabled else 'disabled' }}" id="report-approval-card">
+                <div class="notification-header">
+                  <h6 class="notification-title">
+                    <i class="fas fa-clipboard-check mr-2"></i>Report Approval Notifications
+                    <span class="info-tooltip" data-toggle="tooltip" title="Sends an email when a report requires approval">
+                      <i class="fas fa-info-circle"></i>
+                    </span>
+                  </h6>
+                  <div class="notification-switch">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input notification-toggle" 
+                            id="report_approval_enabled" name="report_approval_enabled" 
+                            {% if settings.report_approval.enabled %}checked{% endif %} 
+                            data-target="report-approval-options">
+                      <label class="custom-control-label" for="report_approval_enabled">Enable</label>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="notification-description">
+                  Notifies designated approvers when a report has been uploaded and requires review/approval.
+                </div>
+                
+                <div class="notification-options" id="report-approval-options" {{ 'style="display:none"' if not settings.report_approval.enabled }}>
+                  <div class="form-group">
+                    <label>Approvers:</label>
+                    <div class="recipients-container" id="report-approval-recipients">
+                      {% if settings.report_approval.recipients %}
+                        {% for email in settings.report_approval.recipients %}
+                          <div class="recipient-pill">
+                            {{ email }}
+                            <i class="fas fa-times remove-recipient"></i>
+                            <input type="hidden" name="report_approval_recipients" value="{{ email }}">
+                          </div>
+                        {% endfor %}
+                      {% endif %}
+                    </div>
+                    <div class="add-recipient-form">
+                      <input type="email" class="form-control form-control-sm" placeholder="Add approver email">
+                      <button type="button" class="btn btn-sm btn-primary add-recipient-btn">
+                        <i class="fas fa-plus"></i> Add
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div class="form-group">
+                    <div class="custom-control custom-checkbox">
+                      <input type="checkbox" class="custom-control-input" id="report_approval_reminder" 
+                            name="report_approval_reminder"
+                            {% if settings.report_approval.options and settings.report_approval.options.send_reminder %}checked{% endif %}>
+                      <label class="custom-control-label" for="report_approval_reminder">Send reminder if not approved within</label>
+                    </div>
+                    <div class="input-group mt-2" style="max-width: 200px;">
+                      <input type="number" class="form-control" id="report_approval_reminder_days" 
+                            name="report_approval_reminder_days" 
+                            value="{{ settings.report_approval.options.reminder_days if settings.report_approval.options and 'reminder_days' in settings.report_approval.options else 3 }}" 
+                            min="1" max="30">
+                      <div class="input-group-append">
+                        <span class="input-group-text">days</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Work Order Status Change Notification -->
+              <div class="notification-card {{ 'enabled' if settings.status_change.enabled else 'disabled' }}" id="status-change-card">
+                <div class="notification-header">
+                  <h6 class="notification-title">
+                    <i class="fas fa-exchange-alt mr-2"></i>Work Order Status Change
+                    <span class="info-tooltip" data-toggle="tooltip" title="Sends an email when a work order's status changes">
+                      <i class="fas fa-info-circle"></i>
+                    </span>
+                  </h6>
+                  <div class="notification-switch">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input notification-toggle" 
+                            id="status_change_enabled" name="status_change_enabled" 
+                            {% if settings.status_change.enabled %}checked{% endif %} 
+                            data-target="status-change-options">
+                      <label class="custom-control-label" for="status_change_enabled">Enable</label>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="notification-description">
+                  Notifies recipients when a work order's status changes (e.g., from Open to Complete or Complete to Closed).
+                </div>
+                
+                <div class="notification-options" id="status-change-options" {{ 'style="display:none"' if not settings.status_change.enabled }}>
+                  <div class="form-group">
+                    <label>Recipients:</label>
+                    <div class="recipients-container" id="status-change-recipients">
+                      {% if settings.status_change.recipients %}
+                        {% for email in settings.status_change.recipients %}
+                          <div class="recipient-pill">
+                            {{ email }}
+                            <i class="fas fa-times remove-recipient"></i>
+                            <input type="hidden" name="status_change_recipients" value="{{ email }}">
+                          </div>
+                        {% endfor %}
+                      {% endif %}
+                    </div>
+                    <div class="add-recipient-form">
+                      <input type="email" class="form-control form-control-sm" placeholder="Add recipient email">
+                      <button type="button" class="btn btn-sm btn-primary add-recipient-btn">
+                        <i class="fas fa-plus"></i> Add
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label>Notify on these status changes:</label>
+                    <div class="custom-control custom-checkbox">
+                      <input type="checkbox" class="custom-control-input" id="status_open_to_complete" 
+                            name="status_open_to_complete" 
+                            {% if settings.status_change.options and settings.status_change.options.open_to_complete %}checked{% endif %}>
+                      <label class="custom-control-label" for="status_open_to_complete">Open → Complete</label>
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                      <input type="checkbox" class="custom-control-input" id="status_complete_to_closed" 
+                            name="status_complete_to_closed" 
+                            {% if settings.status_change.options and settings.status_change.options.complete_to_closed %}checked{% endif %}>
+                      <label class="custom-control-label" for="status_complete_to_closed">Complete → Closed</label>
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                      <input type="checkbox" class="custom-control-input" id="status_any_to_open" 
+                            name="status_any_to_open" 
+                            {% if settings.status_change.options and settings.status_change.options.any_to_open %}checked{% endif %}>
+                      <label class="custom-control-label" for="status_any_to_open">Any → Open</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Hours Threshold Alert -->
+              <div class="notification-card {{ 'enabled' if settings.hours_threshold.enabled else 'disabled' }}" id="hours-threshold-card">
+                <div class="notification-header">
+                  <h6 class="notification-title">
+                    <i class="fas fa-hourglass-half mr-2"></i>Hours Threshold Alert
+                    <span class="info-tooltip" data-toggle="tooltip" title="Sends an alert when a work order approaches or exceeds its estimated hours">
+                      <i class="fas fa-info-circle"></i>
+                    </span>
+                  </h6>
+                  <div class="notification-switch">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input notification-toggle" 
+                            id="hours_threshold_enabled" name="hours_threshold_enabled" 
+                            {% if settings.hours_threshold.enabled %}checked{% endif %} 
+                            data-target="hours-threshold-options">
+                      <label class="custom-control-label" for="hours_threshold_enabled">Enable</label>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="notification-description">
+                  Sends an alert when a work order's logged hours reach a certain percentage of estimated hours.
+                </div>
+                
+                <div class="notification-options" id="hours-threshold-options" {{ 'style="display:none"' if not settings.hours_threshold.enabled }}>
+                  <div class="form-group">
+                    <label>Recipients:</label>
+                    <div class="recipients-container" id="hours-threshold-recipients">
+                      {% if settings.hours_threshold.recipients %}
+                        {% for email in settings.hours_threshold.recipients %}
+                          <div class="recipient-pill">
+                            {{ email }}
+                            <i class="fas fa-times remove-recipient"></i>
+                            <input type="hidden" name="hours_threshold_recipients" value="{{ email }}">
+                          </div>
+                        {% endfor %}
+                      {% endif %}
+                    </div>
+                    <div class="add-recipient-form">
+                      <input type="email" class="form-control form-control-sm" placeholder="Add recipient email">
+                      <button type="button" class="btn btn-sm btn-primary add-recipient-btn">
+                        <i class="fas fa-plus"></i> Add
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label>Alert Thresholds:</label>
+                    <div class="row">
+                      <div class="col-sm-6">
+                        <div class="input-group mb-2">
+                          <div class="input-group-prepend">
+                            <div class="input-group-text">Warning at</div>
+                          </div>
+                          <input type="number" class="form-control" id="hours_warning_threshold" 
+                                name="hours_warning_threshold" min="1" max="200" 
+                                value="{{ settings.hours_threshold.options.warning_threshold if settings.hours_threshold.options and 'warning_threshold' in settings.hours_threshold.options else 80 }}">
+                          <div class="input-group-append">
+                            <div class="input-group-text">%</div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-sm-6">
+                        <div class="custom-control custom-checkbox mt-2">
+                          <input type="checkbox" class="custom-control-input" id="hours_exceeded_alert" 
+                                name="hours_exceeded_alert" 
+                                {% if settings.hours_threshold.options and settings.hours_threshold.options.exceeded_alert %}checked{% endif %}>
+                          <label class="custom-control-label" for="hours_exceeded_alert">Alert when hours exceeded</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="form-group">
+                    <div class="custom-control custom-checkbox">
+                      <input type="checkbox" class="custom-control-input" id="include_work_order_owner" 
+                            name="include_work_order_owner" 
+                            {% if settings.hours_threshold.options and settings.hours_threshold.options.include_work_order_owner %}checked{% endif %}>
+                      <label class="custom-control-label" for="include_work_order_owner">Also send to work order owner (if email available)</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Scheduled Date Reminder -->
+              <div class="notification-card {{ 'enabled' if settings.scheduled_date.enabled else 'disabled' }}" id="scheduled-date-card">
+                <div class="notification-header">
+                  <h6 class="notification-title">
+                    <i class="fas fa-calendar-alt mr-2"></i>Scheduled Date Reminder
+                    <span class="info-tooltip" data-toggle="tooltip" title="Sends a reminder before a work order's scheduled date">
+                      <i class="fas fa-info-circle"></i>
+                    </span>
+                  </h6>
+                  <div class="notification-switch">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input notification-toggle" 
+                            id="scheduled_date_enabled" name="scheduled_date_enabled" 
+                            {% if settings.scheduled_date.enabled %}checked{% endif %} 
+                            data-target="scheduled-date-options">
+                      <label class="custom-control-label" for="scheduled_date_enabled">Enable</label>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="notification-description">
+                  Sends a reminder before a work order's scheduled date arrives.
+                </div>
+                
+                <div class="notification-options" id="scheduled-date-options" {{ 'style="display:none"' if not settings.scheduled_date.enabled }}>
+                  <div class="form-group">
+                    <label>Recipients:</label>
+                    <div class="recipients-container" id="scheduled-date-recipients">
+                      {% if settings.scheduled_date.recipients %}
+                        {% for email in settings.scheduled_date.recipients %}
+                          <div class="recipient-pill">
+                            {{ email }}
+                            <i class="fas fa-times remove-recipient"></i>
+                            <input type="hidden" name="scheduled_date_recipients" value="{{ email }}">
+                          </div>
+                        {% endfor %}
+                      {% endif %}
+                    </div>
+                    <div class="add-recipient-form">
+                      <input type="email" class="form-control form-control-sm" placeholder="Add recipient email">
+                      <button type="button" class="btn btn-sm btn-primary add-recipient-btn">
+                        <i class="fas fa-plus"></i> Add
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label>Reminder Days:</label>
+                    <div class="row">
+                      <div class="col-sm-6">
+                        <div class="input-group">
+                          <div class="input-group-prepend">
+                            <div class="input-group-text">Send</div>
+                          </div>
+                          <input type="number" class="form-control" id="scheduled_date_days" 
+                                name="scheduled_date_days" min="1" max="30" 
+                                value="{{ settings.scheduled_date.options.days_before if settings.scheduled_date.options and 'days_before' in settings.scheduled_date.options else 3 }}">
+                          <div class="input-group-append">
+                            <div class="input-group-text">days before</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="form-group">
+                    <div class="custom-control custom-checkbox">
+                      <input type="checkbox" class="custom-control-input" id="scheduled_include_owner" 
+                            name="scheduled_include_owner" 
+                            {% if settings.scheduled_date.options and settings.scheduled_date.options.include_owner %}checked{% endif %}>
+                      <label class="custom-control-label" for="scheduled_include_owner">Also send to work order owner (if email available)</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- New Work Order Notification -->
+              <div class="notification-card {{ 'enabled' if settings.new_work_order.enabled else 'disabled' }}" id="new-work-order-card">
+                <div class="notification-header">
+                  <h6 class="notification-title">
+                    <i class="fas fa-plus-circle mr-2"></i>New Work Order Notification
+                    <span class="info-tooltip" data-toggle="tooltip" title="Sends a notification when a new work order is created">
+                      <i class="fas fa-info-circle"></i>
+                    </span>
+                  </h6>
+                  <div class="notification-switch">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input notification-toggle" 
+                            id="new_work_order_enabled" name="new_work_order_enabled" 
+                            {% if settings.new_work_order.enabled %}checked{% endif %} 
+                            data-target="new-work-order-options">
+                      <label class="custom-control-label" for="new_work_order_enabled">Enable</label>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="notification-description">
+                  Notifies recipients when a new work order is created in the system.
+                </div>
+                
+                <div class="notification-options" id="new-work-order-options" {{ 'style="display:none"' if not settings.new_work_order.enabled }}>
+                  <div class="form-group">
+                    <label>Recipients:</label>
+                    <div class="recipients-container" id="new-work-order-recipients">
+                      {% if settings.new_work_order.recipients %}
+                        {% for email in settings.new_work_order.recipients %}
+                          <div class="recipient-pill">
+                            {{ email }}
+                            <i class="fas fa-times remove-recipient"></i>
+                            <input type="hidden" name="new_work_order_recipients" value="{{ email }}">
+                          </div>
+                        {% endfor %}
+                      {% endif %}
+                    </div>
+                    <div class="add-recipient-form">
+                      <input type="email" class="form-control form-control-sm" placeholder="Add recipient email">
+                      <button type="button" class="btn btn-sm btn-primary add-recipient-btn">
+                        <i class="fas fa-plus"></i> Add
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label>Filter by Priority:</label>
+                    <div class="custom-control custom-checkbox">
+                      <input type="checkbox" class="custom-control-input" id="new_work_order_high" 
+                            name="new_work_order_high" 
+                            {% if settings.new_work_order.options and settings.new_work_order.options.high_priority %}checked{% endif %}>
+                      <label class="custom-control-label" for="new_work_order_high">High Priority</label>
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                      <input type="checkbox" class="custom-control-input" id="new_work_order_medium" 
+                            name="new_work_order_medium" 
+                            {% if settings.new_work_order.options and settings.new_work_order.options.medium_priority %}checked{% endif %}>
+                      <label class="custom-control-label" for="new_work_order_medium">Medium Priority</label>
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                      <input type="checkbox" class="custom-control-input" id="new_work_order_low" 
+                            name="new_work_order_low" 
+                            {% if settings.new_work_order.options and settings.new_work_order.options.low_priority %}checked{% endif %}>
+                      <label class="custom-control-label" for="new_work_order_low">Low Priority</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Email Server Configuration -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">Email Server Configuration</h5>
+            </div>
+            <div class="card-body">
+              <p>These settings are configured in the application code. Contact your administrator to change the SMTP server configuration.</p>
+              
+              <div class="server-info-card">
+                <div class="server-info-item">
+                  <span class="server-info-label">SMTP Server:</span>
+                  <span>{{ mail_server }}</span>
+                </div>
+                <div class="server-info-item">
+                  <span class="server-info-label">Port:</span>
+                  <span>{{ mail_port }}</span>
+                </div>
+                <div class="server-info-item">
+                  <span class="server-info-label">Use TLS:</span>
+                  <span>{{ 'Yes' if mail_use_tls else 'No' }}</span>
+                </div>
+                <div class="server-info-item">
+                  <span class="server-info-label">Sender Email:</span>
+                  <span>{{ mail_username }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="d-flex justify-content-between">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save mr-1"></i> Save Settings
+            </button>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">
+              <i class="fas fa-times mr-1"></i> Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Test Email Modal -->
+  <div class="modal fade" id="testEmailModal" tabindex="-1" role="dialog" aria-labelledby="testEmailModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="testEmailModalLabel">Send Test Email</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="testEmailRecipient">Recipient Email:</label>
+            <input type="email" class="form-control" id="testEmailRecipient" placeholder="Enter email address">
+          </div>
+          <div class="form-group">
+            <label for="testEmailSubject">Subject:</label>
+            <input type="text" class="form-control" id="testEmailSubject" value="RMJ Dashboard Test Email">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="sendTestEmailBtn">Send Test</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      // Initialize tooltips
+      $('[data-toggle="tooltip"]').tooltip();
+      
+      // Initialize modal
+      $('#testEmailModal').modal({show: false});
+      
+      // Set initial states for all notification cards
+      function updateNotificationCards() {
+        var globalEnabled = $('#notification_enabled').is(':checked');
+        
+        $('.notification-card').each(function() {
+          var card = $(this);
+          var toggle = card.find('.notification-toggle');
+          var isToggleChecked = toggle.is(':checked');
+          var targetId = toggle.data('target');
+          
+          if (globalEnabled) {
+            card.removeClass('disabled');
+            if (isToggleChecked) {
+              card.addClass('enabled');
+              $('#' + targetId).show();
+            } else {
+              card.removeClass('enabled');
+              $('#' + targetId).hide();
+            }
+          } else {
+            card.addClass('disabled');
+            card.removeClass('enabled');
+            toggle.prop('checked', false);
+            $('#' + targetId).hide();
+          }
+        });
+        
+        // Special handling for Report Upload card
+        if (globalEnabled) {
+          if (!$('#report_upload_enabled').is(':checked')) {
+            $('#report_upload_enabled').prop('checked', true);
+          }
+          $('#report-upload-options').show();
+          $('#report-upload-card').addClass('enabled');
+        }
+      }
+      
+      // Run initial update
+      updateNotificationCards();
+      
+      // Handle global notification toggle
+      $('#notification_enabled').change(function() {
+        updateNotificationCards();
+      });
+      
+      // Handle individual notification toggles
+      $('.notification-toggle').change(function() {
+        var isEnabled = $(this).is(':checked');
+        var targetId = $(this).data('target');
+        var card = $(this).closest('.notification-card');
+        
+        // Make sure global notifications are enabled first
+        if (!$('#notification_enabled').is(':checked')) {
+          alert("Please enable global notifications first");
+          $(this).prop('checked', false);
+          return false;
+        }
+        
+        if (isEnabled) {
+          $('#' + targetId).show();
+          card.addClass('enabled');
+        } else {
+          $('#' + targetId).hide();
+          card.removeClass('enabled');
+        }
+      });
+      
+      // Verify email configuration
+      $('#verify-email-btn').click(function() {
+        $.get('/admin/verify_email_configuration', function(data) {
+          if (data.success) {
+            alert('Email configuration is valid! Server connection successful.');
+          } else {
+            alert('Email configuration error: ' + data.message);
+          }
+        }).fail(function() {
+          alert('Failed to verify email configuration. Check server logs for more information.');
+        });
+      });
+      
+      // Test email functionality
+      $('.test-email-btn').click(function() {
+        // Show the test email modal
+        $('#testEmailModal').modal('show');
+        
+        // Pre-fill with default notification email if available
+        const defaultEmail = $('#default_notification_email').val();
+        if (defaultEmail) {
+          $('#testEmailRecipient').val(defaultEmail);
+        }
+      });
+      
+      // Handle test email send button
+      $('#sendTestEmailBtn').click(function() {
+        const recipient = $('#testEmailRecipient').val();
+        const subject = $('#testEmailSubject').val();
+        
+        if (!recipient) {
+          alert('Please enter a recipient email address');
+          return;
+        }
+        
+        // Display loading state
+        const originalText = $(this).html();
+        $(this).html('<i class="fas fa-spinner fa-spin"></i> Sending...');
+        $(this).prop('disabled', true);
+        
+        // Make AJAX call to send test email
+        $.ajax({
+          url: '/admin/send_test_email',
+          method: 'POST',
+          data: {
+            recipient: recipient,
+            subject: subject
+          },
+          success: function(response) {
+            $('#testEmailModal').modal('hide');
+            alert('Test email sent successfully to ' + recipient);
+          },
+          error: function(xhr) {
+            let errorMessage = 'Failed to send test email';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+              errorMessage = xhr.responseJSON.message;
+            }
+            alert('Error: ' + errorMessage);
+          },
+          complete: function() {
+            // Restore button state
+            $('#sendTestEmailBtn').html(originalText);
+            $('#sendTestEmailBtn').prop('disabled', false);
+          }
+        });
+      });
+      
+      // Validate email format
+      function isValidEmail(email) {
+        var re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
+      }
+      
+      // Add recipient functionality
+      $('.add-recipient-btn').click(function() {
+        var input = $(this).prev('input');
+        var email = input.val().trim();
+        
+        if (email && isValidEmail(email)) {
+          var recipientsContainer = $(this).closest('.form-group').find('.recipients-container');
+          var containerId = recipientsContainer.attr('id');
+          
+          // Get notification type with correct format for backend
+          var notificationType = containerId.replace('-recipients', '').replace('-', '_'); 
+          var recipientKey = notificationType + "_recipients";
+          
+          // Create the pill with a hidden input field for form submission
+          var newRecipient = $('<div class="recipient-pill">' + 
+                            email + 
+                            '<i class="fas fa-times remove-recipient"></i>' +
+                            '<input type="hidden" name="' + recipientKey + '" value="' + email + '">' +
+                          '</div>');
+          
+          recipientsContainer.append(newRecipient);
+          input.val('');
+          
+          // Add remove functionality to the new recipient pill
+          newRecipient.find('.remove-recipient').click(function() {
+            $(this).parent().remove();
+          });
+        } else {
+          alert('Please enter a valid email address');
+        }
+      });
+      
+      // Initial setup for remove recipient functionality
+      $('.remove-recipient').click(function() {
+        $(this).parent().remove();
+      });
+      
+      // Allow pressing Enter to add a recipient
+      $('.add-recipient-form input').keypress(function(e) {
+        if (e.which == 13) {  // Enter key
+          e.preventDefault();
+          $(this).next('.add-recipient-btn').click();
+        }
+      });
+      
+      // Add hidden inputs for all existing recipients on page load
+      $('.recipients-container .recipient-pill').each(function() {
+        var container = $(this).closest('.recipients-container');
+        var containerId = container.attr('id');
+        
+        // Format the key name properly for backend
+        var notificationType = containerId.replace('-recipients', '').replace('-', '_');
+        var recipientKey = notificationType + "_recipients";
+        
+        var email = $(this).text().trim().replace('×', '').trim();
+        
+        // Add hidden input if it doesn't already exist
+        if ($(this).find('input[type="hidden"]').length === 0) {
+          $(this).append('<input type="hidden" name="' + recipientKey + '" value="' + email + '">');
+        } else {
+          // Update existing hidden input name to ensure correct format
+          $(this).find('input[type="hidden"]').attr('name', recipientKey);
+        }
+      });
+      
+      $('#notificationForm').submit(function(e) {
+        // Temporarily prevent form submission
+        e.preventDefault();
+        
+        // Log all form data
+        var formData = $(this).serializeArray();
+        console.log("Form data:", formData);
+        
+        // Show in alert for easier debugging
+        alert("Check console for form data");
+        
+        // Uncomment to allow form submission after checking
+        this.submit();
+      });
+
+      // COMPLETELY REWRITTEN form submission handler
+      $('#notificationForm').submit(function(e) {
+        // First, remove any leftover hidden inputs that aren't in pills
+        $('input[type="hidden"][name$="_recipients"]').not('.recipient-pill input').remove();
+        
+        // Process each recipient container
+        $('.recipients-container').each(function() {
+          var containerId = $(this).attr('id');
+          var notificationType = containerId.replace('-recipients', '').replace('-', '_');
+          var recipientKey = notificationType + "_recipients";
+          
+          // Skip if no recipients - backend will use default
+          if ($(this).find('.recipient-pill').length === 0) {
+            return;
+          }
+          
+          // Add all emails from this container with the correct name format
+          $(this).find('.recipient-pill').each(function() {
+            var email = $(this).text().trim();
+            email = email.replace(/[×✕✖]/g, '').trim();
+            
+            if (email && email.indexOf('@') > 0) {
+              // Make sure we're using the right name format for the backend
+              $(this).find('input[type="hidden"]').attr('name', recipientKey).val(email);
+            }
+          });
+        });
+        
+        // Optional: Debug log the form data (you can remove this in production)
+        console.log("Form data being submitted:");
+        var formData = $(this).serializeArray();
+        formData.forEach(function(item) {
+          console.log(item.name + ": " + item.value);
+        });
+        
+        // Continue with form submission
+        return true;
+      });
+    });
+  </script>
+</body>
+</html>

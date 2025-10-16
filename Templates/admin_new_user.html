@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Create New User - RMJ Dashboard</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+  <style>
+    /* Navbar */
+    .navbar { background-color: #ffffff; }
+    .navbar-brand img { height: 40px; }
+    .dropdown-menu { border-radius: .35rem; }
+
+    /* Full-width container */
+    .container-fluid { max-width: 100%; padding: 0 0.5rem; }
+
+    /* Card styling */
+    .card {
+      border-radius: .35rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      margin-bottom: 1.5rem;
+    }
+    .card-header {
+      background-color: #f8f9fa;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    }
+    
+    /* Form styling */
+    .form-control {
+      border-radius: .25rem;
+    }
+    .form-control:focus {
+      border-color: #80bdff;
+      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+    
+    label {
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+      color: #495057;
+    }
+    
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+    
+    /* Button improvements */
+    .btn {
+      border-radius: .25rem;
+      font-weight: 500;
+    }
+    .btn-primary {
+      background-color: #007bff;
+      border-color: #007bff;
+    }
+    .btn-primary:hover {
+      background-color: #0069d9;
+      border-color: #0062cc;
+    }
+    .btn-secondary {
+      background-color: #6c757d;
+      border-color: #6c757d;
+    }
+    .btn-secondary:hover {
+      background-color: #5a6268;
+      border-color: #545b62;
+    }
+    
+    /* Sticky header for mobile */
+    .sticky-top {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    
+    /* Mobile-specific styles */
+    @media (max-width: 767px) {
+      .mobile-p-0 { padding: 0 !important; }
+      .mobile-p-1 { padding: 0.25rem !important; }
+      
+      /* Fix navbar on mobile */
+      .navbar-collapse {
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+    }
+    
+    /* Form content container */
+    .form-content {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    /* Required field indicator */
+    .required-field::after {
+      content: "*";
+      color: #dc3545;
+      margin-left: 0.25rem;
+    }
+    
+    /* Admin title bar */
+    .admin-title-bar {
+      background-color: #343a40;
+      color: white;
+      padding: 0.5rem 1rem;
+      margin-bottom: 1rem;
+      border-radius: .25rem;
+    }
+    
+    /* Password strength */
+    .password-strength {
+      height: 5px;
+      border-radius: 5px;
+      margin-top: 5px;
+      transition: all 0.3s ease;
+    }
+    
+    .strength-weak { background-color: #dc3545; width: 30%; }
+    .strength-medium { background-color: #ffc107; width: 60%; }
+    .strength-strong { background-color: #28a745; width: 100%; }
+    
+    /* User role badges */
+    .role-badge {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      border-radius: 0.25rem;
+      margin-bottom: 1rem;
+      font-weight: 600;
+      width: 100%;
+      text-align: center;
+    }
+    
+    .role-badge-admin {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .role-badge-user {
+      background-color: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    
+    /* Info card */
+    .info-card {
+      background-color: #e9f7fe;
+      border-left: 4px solid #3498db;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      border-radius: .25rem;
+    }
+    
+    /* Loading spinner */
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .spinner-border {
+      width: 3rem;
+      height: 3rem;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top py-2">
+    <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+      <img src="{{ url_for('static', filename='RMJ logo.png') }}" alt="RMJ Logo" class="mr-2">
+      <span class="h5 mb-0 d-none d-sm-inline">RMJ Dashboard</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav mr-auto">
+        <!-- Work Orders -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="woDropdown" role="button" data-toggle="dropdown">Work Orders</a>
+          <div class="dropdown-menu" aria-labelledby="woDropdown">
+            <a class="dropdown-item" href="{{ url_for('index') }}">Open</a>
+            <a class="dropdown-item" href="{{ url_for('completed_work_orders') }}">Completed</a>
+            <a class="dropdown-item" href="{{ url_for('closed_work_orders') }}">Closed</a>
+          </div>
+        </li>
+        <!-- Projects - New Section -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="projectsDropdown" role="button" data-toggle="dropdown">Projects</a>
+          <div class="dropdown-menu" aria-labelledby="projectsDropdown">
+            <a class="dropdown-item" href="{{ url_for('projects') }}">All Projects</a>
+            <a class="dropdown-item" href="{{ url_for('new_project') }}">New Project</a>
+          </div>
+        </li>
+        <!-- Timesheets -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="tsDropdown" role="button" data-toggle="dropdown">Timesheets</a>
+          <div class="dropdown-menu" aria-labelledby="tsDropdown">
+            <a class="dropdown-item" href="{{ url_for('new_timesheet') }}">New Entry</a>
+            <a class="dropdown-item" href="{{ url_for('select_weekly_timesheet') }}">Select Weekly</a>
+            <a class="dropdown-item" href="/workorder/reassign_entries">Reassign Entries</a>
+          </div>
+        </li>
+        <!-- Actions -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="actionsDropdown" role="button" data-toggle="dropdown">Actions</a>
+          <div class="dropdown-menu" aria-labelledby="actionsDropdown">
+            <a class="dropdown-item" href="{{ url_for('new_work_order') }}">Create WO</a>
+            <a class="dropdown-item" href="{{ url_for('import_excel') }}">Import Excel</a>
+            <a class="dropdown-item" href="{{ url_for('export_excel') }}">Export Excel</a>
+          </div>
+        </li>
+        <!-- Admin -->
+        <li class="nav-item dropdown active">
+          <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-toggle="dropdown">Admin</a>
+          <div class="dropdown-menu" aria-labelledby="adminDropdown">
+            <a class="dropdown-item" href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+            <a class="dropdown-item active" href="{{ url_for('admin_users') }}">User Mgmt</a>
+            <a class="dropdown-item" href="{{ url_for('admin_import_time_entries') }}">Import Time</a>
+            <a class="dropdown-item" href="{{ url_for('admin_email_settings') }}">Notifications</a>
+            <a class="dropdown-item" href="{{ url_for('classify_work_orders') }}">Classify Work Orders</a>
+          </div>
+        </li>
+      </ul>
+      <!-- Search inputs -->
+      <div class="d-flex flex-column flex-md-row">
+        <!-- Search all work orders -->
+        <form class="form-inline my-2 my-lg-0" action="{{ url_for('search') }}" method="get">
+          <input type="hidden" name="status" value="all">
+          <div class="input-group input-group-sm">
+            <input class="form-control form-control-sm" name="query" type="search" placeholder="Search All WOs" aria-label="Search All">
+            <div class="input-group-append">
+              <button class="btn btn-outline-primary btn-sm" type="submit">Search</button>
+            </div>
+          </div>
+        </form>
+      </div>
+      <ul class="navbar-nav ml-md-3 mt-2 mt-md-0">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container-fluid mt-4">
+    <div class="form-content">
+      <div class="admin-title-bar d-flex justify-content-between align-items-center">
+        <h1 class="h3 mb-0">Create New User</h1>
+        <span class="badge badge-light">Admin Panel</span>
+      </div>
+      
+      <div class="row">
+        <div class="col-lg-8">
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0"><i class="fas fa-user-plus mr-2"></i>New User Details</h5>
+            </div>
+            <div class="card-body">
+              <form id="create-user-form" method="POST">
+                <div class="form-group">
+                  <label for="username" class="required-field">Username:</label>
+                  <input type="text" id="username" name="username" class="form-control" required>
+                  <small class="form-text text-muted">Used for login. Cannot be changed later.</small>
+                </div>
+                
+                <div class="form-group">
+                  <label for="password" class="required-field">Password:</label>
+                  <input type="password" id="password" name="password" class="form-control" required>
+                  <div id="password-strength" class="password-strength"></div>
+                  <small class="form-text text-muted">Strong passwords include a mix of letters, numbers, and symbols.</small>
+                </div>
+                
+                <div class="form-group">
+                  <label for="full_name" class="required-field">Full Name:</label>
+                  <input type="text" id="full_name" name="full_name" class="form-control" placeholder="Enter user's full name" required>
+                  <small class="form-text text-muted">Will be displayed in time entries and reports.</small>
+                </div>
+                
+                <div class="form-group">
+                  <label for="role" class="required-field">Role:</label>
+                  <select id="role" name="role" class="form-control" required>
+                    <option value="user" selected>User</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+                
+                <div class="form-group mb-0">
+                  <button type="submit" class="btn btn-success">
+                    <i class="fas fa-user-plus mr-1"></i> Create User
+                  </button>
+                  <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">
+                    <i class="fas fa-times mr-1"></i> Cancel
+                  </a>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-lg-4">
+          <!-- Role Preview -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">Role Preview</h5>
+            </div>
+            <div class="card-body">
+              <h6>Standard User</h6>
+              <div class="role-badge role-badge-user mb-3">
+                <i class="fas fa-user mr-2"></i> USER
+              </div>
+              <p class="text-muted small">Can access work orders, timesheets, and basic features.</p>
+              
+              <hr>
+              
+              <h6>Administrator</h6>
+              <div class="role-badge role-badge-admin">
+                <i class="fas fa-user-shield mr-2"></i> ADMIN
+              </div>
+              <p class="text-muted small">Full system access including user management, settings, and admin features.</p>
+            </div>
+          </div>
+          
+          <!-- Information Card -->
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">User Management Tips</h5>
+            </div>
+            <div class="card-body">
+              <div class="info-card">
+                <h6 class="font-weight-bold mb-2">Best Practices</h6>
+                <ul class="mb-0 pl-3">
+                  <li>Create individual accounts for each team member</li>
+                  <li>Use strong, unique passwords</li>
+                  <li>Only grant admin access when necessary</li>
+                  <li>Use full names to identify users in time entries</li>
+                </ul>
+              </div>
+              
+              <a href="{{ url_for('admin_users') }}" class="btn btn-outline-secondary btn-block mt-3">
+                <i class="fas fa-arrow-left mr-1"></i> Back to User Management
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="spinner-border text-light" role="status">
+      <span class="sr-only">Loading...</span>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Password strength indicator
+    document.getElementById('password').addEventListener('input', function() {
+      const password = this.value;
+      const indicator = document.getElementById('password-strength');
+      
+      // Reset classes
+      indicator.className = 'password-strength';
+      
+      if (password.length === 0) {
+        return;
+      }
+      
+      // Simple strength check
+      if (password.length < 6) {
+        indicator.classList.add('strength-weak');
+      } else if (password.length < 10 || !/[^a-zA-Z0-9]/.test(password)) {
+        indicator.classList.add('strength-medium');
+      } else {
+        indicator.classList.add('strength-strong');
+      }
+    });
+    
+    // Role selection visual effect
+    document.getElementById('role').addEventListener('change', function() {
+      const role = this.value;
+      const userBadge = document.querySelector('.role-badge-user');
+      const adminBadge = document.querySelector('.role-badge-admin');
+      
+      if (role === 'admin') {
+        userBadge.style.opacity = '0.5';
+        adminBadge.style.opacity = '1';
+      } else {
+        userBadge.style.opacity = '1';
+        adminBadge.style.opacity = '0.5';
+      }
+    });
+    
+    // Show loading spinner when form is submitted
+    document.getElementById('create-user-form').addEventListener('submit', function() {
+      document.getElementById('loading-overlay').style.display = 'flex';
+    });
+  </script>
+</body>
+</html>

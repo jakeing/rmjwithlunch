@@ -1,0 +1,231 @@
+<!-- templates/project_dashboard.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Project Dashboard - RMJ Dashboard</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+  <style>
+    /* Navbar */
+    .navbar { background-color: #ffffff; }
+    .navbar-brand img { height: 40px; }
+    .dropdown-menu { border-radius: .35rem; }
+
+    /* Full-width container */
+    .container-fluid { max-width: 100%; padding: 0 0.5rem; }
+
+    /* Card styling */
+    .card {
+      border-radius: .35rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      margin-bottom: 1.5rem;
+      transition: transform 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+    }
+    .card-header {
+      background-color: #f8f9fa;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    }
+    
+    /* Project status badges */
+    .badge-planning {
+      background-color: #17a2b8;
+      color: white;
+    }
+    .badge-in-progress {
+      background-color: #fd7e14;
+      color: white;
+    }
+    .badge-completed {
+      background-color: #28a745;
+      color: white;
+    }
+    .badge-on-hold {
+      background-color: #6c757d;
+      color: white;
+    }
+    
+    /* Progress bar styling */
+    .progress {
+      height: 10px;
+      border-radius: 5px;
+      margin-top: 0.5rem;
+    }
+    
+    /* Project cards layout */
+    .project-card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+    
+    /* Mobile optimizations */
+    @media (max-width: 767px) {
+      .project-card-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    /* Empty state styling */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+    }
+    .empty-state i {
+      font-size: 4rem;
+      color: #dee2e6;
+      margin-bottom: 1rem;
+    }
+    .empty-state h3 {
+      margin-bottom: 1rem;
+      color: #6c757d;
+    }
+
+    /* Dynamic progress bar widths */
+    .progress-dynamic .progress-bar {
+    transition: width 0.3s ease;
+    }
+
+    /* These will be overridden by JavaScript */
+    .progress-bar {
+    width: 0%;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Include the existing navigation bar -->
+  {% include 'navbar.html' %}
+
+  <div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="h2 mb-0">Project Dashboard</h1>
+      <a href="{{ url_for('new_project') }}" class="btn btn-primary">
+        <i class="fas fa-plus mr-1"></i> New Project
+      </a>
+    </div>
+    
+    {% if projects %}
+    <div class="project-card-grid">
+      {% for project in projects %}
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">{{ project.name }}</h5>
+          <span class="badge badge-{{ project.status.lower().replace(' ', '-') }}">{{ project.status }}</span>
+        </div>
+        <div class="card-body">
+          <p class="card-text text-muted">
+            <strong>Work Order:</strong> {{ project.work_order.rmj_job_number }}
+          </p>
+          
+          {% if project.description %}
+          <p class="card-text">{{ project.description|truncate(100) }}</p>
+          {% endif %}
+          
+          <!-- Project date range -->
+          <div class="d-flex justify-content-between text-muted small mb-3">
+            <span>
+              <i class="far fa-calendar-alt mr-1"></i> 
+              {% if project.start_date %}
+              {{ project.start_date.strftime('%Y-%m-%d') }}
+              {% else %}
+              Not started
+              {% endif %}
+            </span>
+            <span>
+              <i class="far fa-calendar-check mr-1"></i>
+              {% if project.end_date %}
+              {{ project.end_date.strftime('%Y-%m-%d') }}
+              {% else %}
+              No end date
+              {% endif %}
+            </span>
+          </div>
+          
+          <!-- Task progress -->
+          {% set total_tasks = project.tasks|length %}
+          {% set completed_tasks = project.tasks|selectattr('status', 'equalto', 'Completed')|list|length %}
+          {% set progress_percentage = (completed_tasks / total_tasks * 100)|int if total_tasks > 0 else 0 %}
+          
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span>Task Progress:</span>
+            <span>{{ completed_tasks }}/{{ total_tasks }} ({{ progress_percentage }}%)</span>
+          </div>
+          <div class="progress progress-dynamic">
+            <div class="progress-bar bg-success" role="progressbar" 
+                data-percentage="{{ progress_percentage|default(0) }}"
+                aria-valuenow="{{ progress_percentage|default(0) }}"
+                aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+          
+          <div class="mt-3">
+            <a href="{{ url_for('project_detail', project_id=project.id) }}" class="btn btn-sm btn-outline-primary">View Details</a>
+            <a href="{{ url_for('project_gantt', project_id=project.id) }}" class="btn btn-sm btn-outline-info">
+              <i class="fas fa-chart-bar mr-1"></i> Gantt Chart
+            </a>
+            <button type="button" class="btn btn-sm btn-outline-danger" data-toggle="modal" data-target="#deleteProjectModal{{ project.id }}">
+              <i class="fas fa-trash-alt mr-1"></i> Delete
+            </button>
+          </div>
+          
+        </div>
+      </div>
+      <div class="modal fade" id="deleteProjectModal{{ project.id }}" tabindex="-1" role="dialog" aria-labelledby="deleteProjectModalLabel{{ project.id }}" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="deleteProjectModalLabel{{ project.id }}">Delete Project</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <p class="text-danger">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                <strong>Warning:</strong> Are you sure you want to delete the project "{{ project.name }}"?
+              </p>
+              <p>This will permanently remove the project and all associated tasks. Time entries will remain but will no longer be linked to any project tasks.</p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+              <form action="{{ url_for('delete_project', project_id=project.id) }}" method="POST" style="display: inline;">
+                <button type="submit" class="btn btn-danger">Delete Project</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <i class="fas fa-clipboard-list"></i>
+      <h3>No Projects Yet</h3>
+      <p class="text-muted">Get started by creating your first project from an eligible Contract/Project work order.</p>
+      <a href="{{ url_for('new_project') }}" class="btn btn-primary">
+        <i class="fas fa-plus mr-1"></i> Create First Project
+      </a>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Set progress bar widths from data attributes
+      document.querySelectorAll('.progress-bar[data-percentage]').forEach(function(bar) {
+        var percentage = bar.getAttribute('data-percentage');
+        bar.style.width = percentage + '%';
+      });
+    });
+  </script>
+</body>
+</html>

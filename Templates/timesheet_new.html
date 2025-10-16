@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Weekly Timesheet Entry - RMJ Dashboard</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+  <style>
+    /* Navbar */
+    .navbar { background-color: #ffffff; }
+    .navbar-brand img { height: 40px; }
+    .dropdown-menu { border-radius: .35rem; }
+
+    /* Full-width container */
+    .container-fluid { max-width: 100%; padding: 0 0.5rem; }
+
+    /* Card styling */
+    .card {
+      border-radius: .35rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      margin-bottom: 1.5rem;
+    }
+    .card-header {
+      background-color: #f8f9fa;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    }
+    
+    /* Form styling */
+    .form-control {
+      border-radius: .25rem;
+    }
+    .form-control:focus {
+      border-color: #80bdff;
+      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+    
+    label {
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+      color: #495057;
+    }
+    
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+    
+    /* Button improvements */
+    .btn {
+      border-radius: .25rem;
+      font-weight: 500;
+    }
+    .btn-primary {
+      background-color: #007bff;
+      border-color: #007bff;
+    }
+    .btn-primary:hover {
+      background-color: #0069d9;
+      border-color: #0062cc;
+    }
+    .btn-secondary {
+      background-color: #6c757d;
+      border-color: #6c757d;
+    }
+    .btn-secondary:hover {
+      background-color: #5a6268;
+      border-color: #545b62;
+    }
+    
+    /* Sticky header for mobile */
+    .sticky-top {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    
+    /* Mobile-specific styles */
+    @media (max-width: 767px) {
+      .mobile-p-0 { padding: 0 !important; }
+      .mobile-p-1 { padding: 0.25rem !important; }
+      
+      /* Fix navbar on mobile */
+      .navbar-collapse {
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+    }
+    
+    /* Quick tips card */
+    .quick-tips {
+      background-color: #e9f7fe;
+      border-left: 4px solid #3498db;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      border-radius: .25rem;
+    }
+    
+    .quick-tips ul {
+      padding-left: 1.5rem;
+      margin-bottom: 0;
+    }
+    
+    .quick-tips li {
+      margin-bottom: 0.5rem;
+    }
+    
+    .quick-tips li:last-child {
+      margin-bottom: 0;
+    }
+    
+    /* Entry card styling */
+    .entry-card {
+      border: 1px solid #dee2e6;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      background-color: #f8f9fa;
+    }
+    
+    .entry-card h3 {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+      color: #495057;
+      border-bottom: 1px solid #dee2e6;
+      padding-bottom: 0.5rem;
+    }
+    
+    /* Entry number badge */
+    .entry-number {
+      display: inline-block;
+      width: 28px;
+      height: 28px;
+      line-height: 28px;
+      text-align: center;
+      background-color: #007bff;
+      color: white;
+      border-radius: 50%;
+      margin-right: 0.5rem;
+    }
+    
+    /* Select2 customization */
+    .select2-container--default .select2-selection--single {
+      height: calc(1.5em + 0.75rem + 2px);
+      padding: 0.375rem 0.75rem;
+      border: 1px solid #ced4da;
+      border-radius: 0.25rem;
+    }
+    
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+      line-height: calc(1.5em + 0.75rem);
+    }
+    
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+      height: calc(1.5em + 0.75rem + 2px);
+    }
+    
+    /* Disabled work order styling */
+    .select2-results__option[aria-disabled=true] {
+      background-color: #e9ecef;
+      color: #6c757d;
+      cursor: not-allowed;
+    }
+    
+    /* Time calculation display */
+    .hours-calculation {
+      display: none;
+      margin-top: 0.5rem;
+      padding: 0.5rem;
+      background-color: #f0f8ff;
+      border-radius: 0.25rem;
+      font-size: 0.875rem;
+    }
+    
+    /* Required field indicator */
+    .required-field::after {
+      content: "*";
+      color: #dc3545;
+      margin-left: 0.25rem;
+    }
+    
+    /* Section dividers */
+    .section-divider {
+      border-top: 1px solid #e9ecef;
+      margin: 1.5rem 0;
+    }
+    
+    /* Form sections */
+    .form-section {
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top py-2">
+    <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+      <img src="{{ url_for('static', filename='RMJ logo.png') }}" alt="RMJ Logo" class="mr-2">
+      <span class="h5 mb-0 d-none d-sm-inline">RMJ Dashboard</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav mr-auto">
+        <!-- Work Orders -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="woDropdown" role="button" data-toggle="dropdown">Work Orders</a>
+          <div class="dropdown-menu" aria-labelledby="woDropdown">
+            <a class="dropdown-item" href="{{ url_for('index') }}">Open</a>
+            <a class="dropdown-item" href="{{ url_for('completed_work_orders') }}">Completed</a>
+            <a class="dropdown-item" href="{{ url_for('closed_work_orders') }}">Closed</a>
+          </div>
+        </li>
+        <!-- Projects - New Section -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="projectsDropdown" role="button" data-toggle="dropdown">Projects</a>
+          <div class="dropdown-menu" aria-labelledby="projectsDropdown">
+            <a class="dropdown-item" href="{{ url_for('projects') }}">All Projects</a>
+            <a class="dropdown-item" href="{{ url_for('new_project') }}">New Project</a>
+          </div>
+        </li>
+        <!-- Timesheets -->
+        <li class="nav-item dropdown active">
+          <a class="nav-link dropdown-toggle" href="#" id="tsDropdown" role="button" data-toggle="dropdown">Timesheets</a>
+          <div class="dropdown-menu" aria-labelledby="tsDropdown">
+            <a class="dropdown-item active" href="{{ url_for('new_timesheet') }}">New Entry</a>
+            <a class="dropdown-item" href="{{ url_for('select_weekly_timesheet') }}">Select Weekly</a>
+            <a class="dropdown-item" href="/workorder/reassign_entries">Reassign Entries</a>
+          </div>
+        </li>
+        <!-- Actions -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="actionsDropdown" role="button" data-toggle="dropdown">Actions</a>
+          <div class="dropdown-menu" aria-labelledby="actionsDropdown">
+            <a class="dropdown-item" href="{{ url_for('new_work_order') }}">Create WO</a>
+            <a class="dropdown-item" href="{{ url_for('import_excel') }}">Import Excel</a>
+            <a class="dropdown-item" href="{{ url_for('export_excel') }}">Export Excel</a>
+          </div>
+        </li>
+        <!-- Admin -->
+        {% if session.get('user_id') and (User.query.get(session.get('user_id')).role.lower() == 'admin' or User.query.get(session.get('user_id')).username.lower() == 'admin') %}
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-toggle="dropdown">Admin</a>
+          <div class="dropdown-menu" aria-labelledby="adminDropdown">
+            <a class="dropdown-item" href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+            <a class="dropdown-item" href="{{ url_for('admin_users') }}">User Mgmt</a>
+            <a class="dropdown-item" href="{{ url_for('admin_import_time_entries') }}">Import Time</a>
+            <a class="dropdown-item" href="{{ url_for('admin_email_settings') }}">Notifications</a>
+          </div>
+        </li>
+        {% endif %}
+      </ul>
+      <!-- Search inputs -->
+      <div class="d-flex flex-column flex-md-row">
+        <!-- Search all work orders -->
+        <form class="form-inline my-2 my-lg-0" action="{{ url_for('search') }}" method="get">
+          <input type="hidden" name="status" value="all">
+          <div class="input-group input-group-sm">
+            <input class="form-control form-control-sm" name="query" type="search" placeholder="Search All WOs" aria-label="Search All">
+            <div class="input-group-append">
+              <button class="btn btn-outline-primary btn-sm" type="submit">Search</button>
+            </div>
+          </div>
+        </form>
+      </div>
+      <ul class="navbar-nav ml-md-3 mt-2 mt-md-0">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container-fluid mt-4">
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle mr-2"></i>{{ message }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    
+    <div class="row">
+
+  <div class="container-fluid mt-4">
+    <div class="row">
+      <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h1 class="h2 mb-0">Weekly Timesheet Entry</h1>
+        </div>
+      
+        <form method="POST" id="timesheet-form">
+          <!-- Entry Cards -->
+          {% for i in range(1, 6) %}
+            <div class="card entry-card" id="entry-card-{{ i }}">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="mb-0"><span class="entry-number">{{ i }}</span> Time Entry</h3>
+                <button type="button" class="btn btn-danger btn-sm clear-entry-btn" data-entry="{{ i }}">
+                  <i class="fas fa-times mr-1"></i> Clear
+                </button>
+              </div>
+              
+              <div class="form-group">
+                <label for="work_order_id_{{ i }}" class="required-field">Work Order:</label>
+                <select name="work_order_id_{{ i }}" id="work_order_id_{{ i }}" class="form-control select2">
+                  <option value="">-- Select Work Order --</option>
+                  {% for wo in work_orders %}
+                    {% if wo.status != 'Closed' and wo.status != 'Complete' %}
+                      <option value="{{ wo.id }}">
+                        {{ wo.customer_work_order_number }} - {{ wo.rmj_job_number }} - {{ wo.description }}
+                      </option>
+                    {% else %}
+                      <option value="{{ wo.id }}" disabled data-status="{{ wo.status }}">
+                        {{ wo.customer_work_order_number }} - {{ wo.rmj_job_number }} - {{ wo.description }} ({{ wo.status }})
+                      </option>
+                    {% endif %}
+                  {% endfor %}
+                </select>
+                <small class="form-text text-muted">Only open work orders can be selected</small>
+              </div>
+              
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="engineer_user_{{ i }}" class="required-field">Engineer Name:</label>
+                    <select name="engineer_user_{{ i }}" id="engineer_user_{{ i }}" class="form-control">
+                      <option value="">-- Select Engineer --</option>
+                      {% for user in users %}
+                        <option value="{{ user.id }}" 
+                                {% if user.id == current_user_id %}selected{% endif %}>
+                          {{ user.full_name or user.username }}
+                        </option>
+                      {% endfor %}
+                    </select>
+                    <!-- Hidden fallback field for backwards compatibility -->
+                    <input type="hidden" name="engineer_{{ i }}" value="{{ default_engineer }}">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="work_date_{{ i }}" class="required-field">Date:</label>
+                    <input type="date" name="work_date_{{ i }}" id="work_date_{{ i }}" class="form-control">
+                  </div>
+                </div>
+              </div>
+              
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="time_in_{{ i }}" class="required-field">Time In:</label>
+                    <input type="time" name="time_in_{{ i }}" id="time_in_{{ i }}" class="form-control time-input" data-entry-id="{{ i }}">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="time_out_{{ i }}" class="required-field">Time Out:</label>
+                    <input type="time" name="time_out_{{ i }}" id="time_out_{{ i }}" class="form-control time-input" data-entry-id="{{ i }}">
+                  </div>
+                </div>
+              </div>
+              
+              <div id="hours-calculation-{{ i }}" class="hours-calculation">
+                <i class="fas fa-calculator mr-1"></i> <strong>Hours: <span class="hours-value">0.00</span></strong>
+              </div>
+              <div class="form-group">
+                <div class="custom-control custom-checkbox">
+                  <input type="checkbox" class="custom-control-input lunch-checkbox" id="had_lunch_{{ i }}" name="had_lunch_{{ i }}" data-entry="{{ i }}">
+                  <label class="custom-control-label" for="had_lunch_{{ i }}">Had Lunch?</label>
+                </div>
+                <div id="lunch_times_{{ i }}" class="lunch-times-container" style="display: none;">
+                  <div class="form-row mt-2">
+                    <div class="col-6">
+                      <label for="lunch_start_{{ i }}" class="small">Lunch Start:</label>
+                      <input type="time" name="lunch_start_{{ i }}" id="lunch_start_{{ i }}" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-6">
+                      <label for="lunch_end_{{ i }}" class="small">Lunch End:</label>
+                      <input type="time" name="lunch_end_{{ i }}" id="lunch_end_{{ i }}" class="form-control form-control-sm">
+                    </div>
+                  </div>
+                  <small class="form-text text-muted">Only time during work hours will be deducted</small>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="description_{{ i }}">Description:</label>
+                <textarea name="description_{{ i }}" id="description_{{ i }}" class="form-control" rows="2" placeholder="Describe what you did"></textarea>
+              </div>
+            </div>
+          {% endfor %}
+          
+          <div class="form-group">
+            <button type="submit" class="btn btn-primary btn-lg">
+              <i class="fas fa-save mr-1"></i> Submit Timesheet
+            </button>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">
+              <i class="fas fa-times mr-1"></i> Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+      
+      <div class="col-lg-4">
+        <!-- Timesheet Tips Card -->
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">Timesheet Tips</h5>
+          </div>
+          <div class="card-body">
+            <div class="quick-tips">
+              <h6 class="font-weight-bold mb-2">Quick Tips</h6>
+              <ul>
+                <li>You can enter up to 5 time entries at once.</li>
+                <li>You only need to fill out entries you want to submit.</li>
+                <li>The engineer name will be pre-filled with your username.</li>
+                <li>Time entries must be for open work orders only.</li>
+                <li>Use 24-hour format for time (e.g., 13:00 for 1:00 PM).</li>
+              </ul>
+            </div>
+            
+            <div class="section-divider"></div>
+            
+            <h6 class="font-weight-bold">Need to view your entries?</h6>
+            <p class="small mb-3">After submitting, you can view and edit your time entries from the weekly timesheet view.</p>
+            
+            <a href="{{ url_for('select_weekly_timesheet') }}" class="btn btn-outline-primary btn-block mb-2">
+              <i class="fas fa-calendar-alt mr-1"></i> View Weekly Timesheet
+            </a>
+            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-block">
+              <i class="fas fa-home mr-1"></i> Back to Dashboard
+            </a>
+          </div>
+        </div>
+        
+        <!-- Today's Date Card -->
+        <div class="card mt-3">
+          <div class="card-header">
+            <h5 class="mb-0">Today's Date</h5>
+          </div>
+          <div class="card-body text-center">
+            <div class="display-4" id="today-date"></div>
+            <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="use-today-btn">
+              <i class="fas fa-calendar-day mr-1"></i> Use Today's Date
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      // Initialize Select2 for dropdowns
+      $('.select2').select2({
+        placeholder: 'Select a work order',
+        width: '100%',
+        templateResult: formatWorkOrder
+      });
+      
+      // Format work orders in the dropdown
+      function formatWorkOrder(workOrder) {
+        if (!workOrder.id) return workOrder.text;
+        
+        var $option = $(workOrder.element);
+        var status = $option.data('status');
+        
+        if (status === 'Closed' || status === 'Complete') {
+          var $result = $('<span></span>');
+          $result.text(workOrder.text);
+          $result.append(' <span class="text-danger">(Cannot select: ' + status + ')</span>');
+          return $result;
+        }
+        
+        return workOrder.text;
+      }
+      
+      // Set today's date in the sidebar
+      var today = new Date();
+      var formattedDate = today.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      $('#today-date').text(formattedDate);
+      
+      // Use today's date button
+      $('#use-today-btn').click(function() {
+        var yyyy = today.getFullYear();
+        var mm = String(today.getMonth() + 1).padStart(2, '0');
+        var dd = String(today.getDate()).padStart(2, '0');
+        var formattedDateValue = yyyy + '-' + mm + '-' + dd;
+        
+        // Set today's date for all empty date fields
+        for (var i = 1; i <= 5; i++) {
+          var dateField = $('#work_date_' + i);
+          if (!dateField.val()) {
+            dateField.val(formattedDateValue);
+          }
+        }
+      });
+      
+      // Calculate hours when time in/out changes
+      $('.time-input').on('change', function() {
+        var entryId = $(this).data('entry-id');
+        calculateHours(entryId);
+      });
+      
+      // Function to calculate hours between time in and time out
+      function calculateHours(entryId) {
+        var timeInEl = $('#time_in_' + entryId);
+        var timeOutEl = $('#time_out_' + entryId);
+        var calculationEl = $('#hours-calculation-' + entryId);
+        
+        if (timeInEl.val() && timeOutEl.val()) {
+          // Use a reference date to calculate the difference
+          var today = new Date().toISOString().split('T')[0];
+          var timeIn = new Date(today + 'T' + timeInEl.val() + ':00');
+          var timeOut = new Date(today + 'T' + timeOutEl.val() + ':00');
+          
+          // If time out is earlier than time in, assume it's the next day
+          if (timeOut < timeIn) {
+            timeOut.setDate(timeOut.getDate() + 1);
+          }
+          
+          // Calculate the difference in hours
+          var diffMs = timeOut - timeIn;
+          var diffHrs = diffMs / (1000 * 60 * 60);
+          
+          // Display the calculation
+          calculationEl.find('.hours-value').text(diffHrs.toFixed(2));
+          calculationEl.show();
+        } else {
+          calculationEl.hide();
+        }
+      }
+      
+      // Form validation before submit
+      // Form validation before submit
+      $('#timesheet-form').submit(function(e) {
+        var valid = false;
+        
+        // Check if at least one entry is complete
+        for (var i = 1; i <= 5; i++) {
+          var workOrderId = $('#work_order_id_' + i).val();
+          var engineerUser = $('#engineer_user_' + i).val();
+          var workDate = $('#work_date_' + i).val();
+          var timeIn = $('#time_in_' + i).val();
+          var timeOut = $('#time_out_' + i).val();
+          var hadLunch = $('#had_lunch_' + i).is(':checked');
+          
+          // If any entry has a work order selected, validate it
+          if (workOrderId) {
+            if (!engineerUser || !workDate || !timeIn || !timeOut) {
+              alert('Please complete all required fields for Entry ' + i);
+              e.preventDefault();
+              return false;
+            }
+            
+            // Validate lunch timing if lunch was taken
+            if (hadLunch) {
+              var lunchEnd = $('#lunch_end_' + i).val();
+              
+              if (timeIn && lunchEnd) {
+                // Parse times
+                var startParts = timeIn.split(':');
+                var lunchParts = lunchEnd.split(':');
+                
+                var startHour = parseInt(startParts[0]);
+                var startMin = parseInt(startParts[1]);
+                var lunchHour = parseInt(lunchParts[0]);
+                var lunchMin = parseInt(lunchParts[1]);
+                
+                // Convert to minutes since midnight
+                var startMinutes = startHour * 60 + startMin;
+                var lunchMinutes = lunchHour * 60 + lunchMin;
+                
+                // Handle overnight
+                if (lunchMinutes < startMinutes) {
+                  lunchMinutes += 24 * 60;
+                }
+                
+                // Calculate difference in hours
+                var hoursDiff = (lunchMinutes - startMinutes) / 60;
+                
+                if (hoursDiff > 6) {
+                  alert('Entry ' + i + ': Lunch must be taken within 6 hours of start time.\n\n' +
+                        'Start: ' + timeIn + '\n' +
+                        'Lunch End: ' + lunchEnd + '\n' +
+                        'Time difference: ' + hoursDiff.toFixed(1) + ' hours\n\n' +
+                        'Please adjust your lunch time.');
+                  e.preventDefault();
+                  return false;
+                }
+              }
+            }
+            
+            valid = true;
+          }
+        }
+        
+        // Rest of the original validation code
+        // Make sure at least one entry is complete
+        if (!valid) {
+          alert('Please complete at least one time entry');
+          e.preventDefault();
+          return false;
+        }
+      });
+
+      // Lunch checkbox toggle for all entries
+      $('.lunch-checkbox').change(function() {
+        const entryId = $(this).data('entry');
+        if ($(this).is(':checked')) {
+          $(`#lunch_times_${entryId}`).slideDown();
+        } else {
+          $(`#lunch_times_${entryId}`).slideUp();
+          $(`#lunch_start_${entryId}`).val('');
+          $(`#lunch_end_${entryId}`).val('');
+        }
+      });
+
+      // Clear entry button functionality
+      $('.clear-entry-btn').click(function() {
+        const entryId = $(this).data('entry');
+        
+        // Confirm before clearing
+        if (confirm(`Are you sure you want to clear Entry ${entryId}?`)) {
+          // Clear work order selection
+          $(`#work_order_id_${entryId}`).val('').trigger('change');
+          
+          // Clear engineer
+          $(`#engineer_user_${entryId}`).val('').trigger('change');
+          
+          // Clear date
+          $(`#work_date_${entryId}`).val('');
+          
+          // Clear times
+          $(`#time_in_${entryId}`).val('');
+          $(`#time_out_${entryId}`).val('');
+          
+          // Clear description
+          $(`#description_${entryId}`).val('');
+          
+          // Clear and hide lunch
+          $(`#had_lunch_${entryId}`).prop('checked', false);
+          $(`#lunch_times_${entryId}`).hide();
+          $(`#lunch_start_${entryId}`).val('');
+          $(`#lunch_end_${entryId}`).val('');
+          
+          // Reset lunch button styling
+          $(`.lunch-checkbox[data-entry="${entryId}"]`).prop('checked', false);
+          
+          // Hide hours calculation if visible
+          $(`#hours-calculation-${entryId}`).hide();
+          
+          // Show success feedback
+          $(this).html('<i class="fas fa-check mr-1"></i> Cleared').removeClass('btn-danger').addClass('btn-success');
+          
+          // Reset button after 2 seconds
+          setTimeout(() => {
+            $(this).html('<i class="fas fa-times mr-1"></i> Clear').removeClass('btn-success').addClass('btn-danger');
+          }, 2000);
+        }
+      });
+
+  </script>
+</body>
+</html>

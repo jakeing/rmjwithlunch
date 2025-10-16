@@ -1,0 +1,312 @@
+<!-- templates/new_task.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Add New Task - {{ project.name }} - RMJ Dashboard</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <style>
+    /* Navbar */
+    .navbar { background-color: #ffffff; }
+    .navbar-brand img { height: 40px; }
+    .dropdown-menu { border-radius: .35rem; }
+
+    /* Full-width container */
+    .container-fluid { max-width: 100%; padding: 0 0.5rem; }
+
+    /* Card styling */
+    .card {
+      border-radius: .35rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      margin-bottom: 1.5rem;
+    }
+    .card-header {
+      background-color: #f8f9fa;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    }
+    
+    /* Form styling */
+    .form-control {
+      border-radius: .25rem;
+    }
+    .form-control:focus {
+      border-color: #80bdff;
+      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+    
+    label {
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+      color: #495057;
+    }
+    
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+    
+    /* Button improvements */
+    .btn {
+      border-radius: .25rem;
+      font-weight: 500;
+    }
+    
+    /* Required field indicator */
+    .required-field::after {
+      content: "*";
+      color: #dc3545;
+      margin-left: 0.25rem;
+    }
+    
+    /* Section dividers */
+    .section-divider {
+      border-top: 1px solid #e9ecef;
+      margin: 1.5rem 0;
+    }
+    
+    /* Form sections */
+    .form-section {
+      margin-bottom: 1rem;
+    }
+    
+    .form-section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #495057;
+      margin-bottom: 1rem;
+    }
+    
+    /* Quick tips card */
+    .quick-tips {
+      background-color: #e9f7fe;
+      border-left: 4px solid #3498db;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      border-radius: .25rem;
+    }
+    
+    .quick-tips ul {
+      padding-left: 1.5rem;
+      margin-bottom: 0;
+    }
+    
+    .quick-tips li {
+      margin-bottom: 0.5rem;
+    }
+    
+    .quick-tips li:last-child {
+      margin-bottom: 0;
+    }
+    
+    /* Select2 customization */
+    .select2-container--default .select2-selection--multiple {
+      border: 1px solid #ced4da;
+      border-radius: 0.25rem;
+    }
+    .select2-container--default.select2-container--focus .select2-selection--multiple {
+      border-color: #80bdff;
+      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice {
+      background-color: #e9ecef;
+      border: 1px solid #ced4da;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Include the existing navigation bar -->
+  {% include 'navbar.html' %}
+
+  <div class="container-fluid mt-4">
+    <div class="form-content">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h1 class="h2 mb-0">Add New Task</h1>
+          <p class="text-muted">Project: {{ project.name }}</p>
+        </div>
+      </div>
+      
+      {% if error %}
+        <div class="alert alert-danger">
+          <strong>Error:</strong> {{ error }}
+        </div>
+      {% endif %}
+      
+      <div class="row">
+        <div class="col-lg-8">
+          <!-- Main form card -->
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">Task Details</h5>
+            </div>
+            <div class="card-body">
+              <form method="POST">
+                <!-- Task Information Section -->
+                <div class="form-section">
+                  <div class="form-section-title">Basic Information</div>
+                  <div class="form-group">
+                    <label for="name" class="required-field">Task Name:</label>
+                    <input type="text" id="name" name="name" class="form-control" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="description">Description:</label>
+                    <textarea id="description" name="description" class="form-control" rows="3"></textarea>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="start_date">Start Date:</label>
+                        <input type="date" id="start_date" name="start_date" class="form-control">
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="end_date">End Date:</label>
+                        <input type="date" id="end_date" name="end_date" class="form-control">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Planning Section -->
+                <div class="section-divider"></div>
+                <div class="form-section">
+                  <div class="form-section-title">Planning</div>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="estimated_hours" class="required-field">Estimated Hours:</label>
+                        <input type="number" step="0.1" id="estimated_hours" name="estimated_hours" class="form-control" value="0" required>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="priority">Priority:</label>
+                        <select id="priority" name="priority" class="form-control">
+                          <option value="Low">Low</option>
+                          <option value="Medium" selected>Medium</option>
+                          <option value="High">High</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="assigned_to">Assigned To:</label>
+                    <select id="assigned_to" name="assigned_to" class="form-control">
+                      <option value="">-- Unassigned --</option>
+                      {% for user in users %}
+                        <option value="{{ user.full_name }}">{{ user.full_name or user.username }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="dependencies">Dependencies:</label>
+                    <select id="dependencies" name="dependencies" class="form-control select2-multiple" multiple="multiple">
+                      {% if existing_tasks %}
+                        {% for task in existing_tasks %}
+                          <option value="{{ task.id }}">{{ task.name }}</option>
+                        {% endfor %}
+                      {% endif %}
+                    </select>
+                    <small class="form-text text-muted">Select tasks that need to be completed before this task can start</small>
+                  </div>
+                </div>
+                
+                <div class="form-group mb-0">
+                  <button type="submit" class="btn btn-success btn-lg">Add Task</button>
+                  <a href="{{ url_for('project_detail', project_id=project.id) }}" class="btn btn-secondary">Cancel</a>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-lg-4">
+          <!-- Quick Tips Card -->
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">Task Creation Tips</h5>
+            </div>
+            <div class="card-body">
+              <div class="quick-tips">
+                <h6 class="font-weight-bold mb-2">Quick Tips</h6>
+                <ul>
+                  <li><strong>Name:</strong> Use clear, action-oriented names (e.g., "Create design mockups" rather than "Design").</li>
+                  <li><strong>Dates:</strong> Set realistic start and end dates based on dependencies and resources.</li>
+                  <li><strong>Estimated Hours:</strong> Be precise but realistic about how long the task will take.</li>
+                  <li><strong>Dependencies:</strong> Setting task dependencies helps maintain proper sequencing in the Gantt chart.</li>
+                </ul>
+              </div>
+              
+              <div class="mt-4">
+                <a href="{{ url_for('project_detail', project_id=project.id) }}" class="btn btn-outline-secondary btn-block">Back to Project</a>
+                <a href="{{ url_for('project_gantt', project_id=project.id) }}" class="btn btn-outline-info btn-block mt-2">View Gantt Chart</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      // Initialize Select2 for dependencies
+      $('.select2-multiple').select2({
+        placeholder: 'Select dependent tasks',
+        width: '100%'
+      });
+      
+      // Set default date values based on project
+      var projectStartDate = '{{ project.start_date.strftime("%Y-%m-%d") if project.start_date else "" }}';
+      var projectEndDate = '{{ project.end_date.strftime("%Y-%m-%d") if project.end_date else "" }}';
+      
+      if (projectStartDate) {
+        document.getElementById('start_date').value = projectStartDate;
+      } else {
+        // Use today as default
+        var today = new Date();
+        var dd = String(today.getDate()).padStart(2, '0');
+        var mm = String(today.getMonth() + 1).padStart(2, '0');
+        var yyyy = today.getFullYear();
+        document.getElementById('start_date').value = yyyy + '-' + mm + '-' + dd;
+      }
+      
+      if (projectEndDate) {
+        document.getElementById('end_date').value = projectEndDate;
+      } else {
+        // Set end date to start date + 7 days
+        var startDate = new Date(document.getElementById('start_date').value);
+        startDate.setDate(startDate.getDate() + 7);
+        var dd = String(startDate.getDate()).padStart(2, '0');
+        var mm = String(startDate.getMonth() + 1).padStart(2, '0');
+        var yyyy = startDate.getFullYear();
+        document.getElementById('end_date').value = yyyy + '-' + mm + '-' + dd;
+      }
+      
+      // Update end date when start date changes
+      $('#start_date').change(function() {
+        var startDate = new Date($(this).val());
+        var endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 7);
+        
+        var dd = String(endDate.getDate()).padStart(2, '0');
+        var mm = String(endDate.getMonth() + 1).padStart(2, '0');
+        var yyyy = endDate.getFullYear();
+        
+        // Only update if end date is not already set
+        if (!$('#end_date').val()) {
+          $('#end_date').val(yyyy + '-' + mm + '-' + dd);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

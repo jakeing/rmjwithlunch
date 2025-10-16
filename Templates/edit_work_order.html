@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Edit Work Order - ID {{ work_order.id }} - RMJ Dashboard</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <style>
+    /* Navbar */
+    .navbar { background-color: #ffffff; }
+    .navbar-brand img { height: 40px; }
+    .dropdown-menu { border-radius: .35rem; }
+
+    /* Full-width container */
+    .container-fluid { max-width: 100%; padding: 0 0.5rem; }
+
+    /* Card styling */
+    .card {
+      border-radius: .35rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      margin-bottom: 1.5rem;
+    }
+    .card-header {
+      background-color: #f8f9fa;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    }
+    
+    /* Form styling */
+    .form-control {
+      border-radius: .25rem;
+    }
+    .form-control:focus {
+      border-color: #80bdff;
+      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+    
+    label {
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+      color: #495057;
+    }
+    
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+    
+    /* Button improvements */
+    .btn {
+      border-radius: .25rem;
+      font-weight: 500;
+    }
+    .btn-success {
+      background-color: #28a745;
+      border-color: #28a745;
+    }
+    .btn-success:hover {
+      background-color: #218838;
+      border-color: #1e7e34;
+    }
+    .btn-secondary {
+      background-color: #6c757d;
+      border-color: #6c757d;
+    }
+    .btn-secondary:hover {
+      background-color: #5a6268;
+      border-color: #545b62;
+    }
+    
+    /* Sticky header for mobile */
+    .sticky-top {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    
+    /* Mobile-specific styles */
+    @media (max-width: 767px) {
+      .mobile-p-0 { padding: 0 !important; }
+      .mobile-p-1 { padding: 0.25rem !important; }
+      
+      /* Fix navbar on mobile */
+      .navbar-collapse {
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+    }
+    
+    /* Error alert styling */
+    .alert-danger {
+      border-radius: .25rem;
+      border-left: 4px solid #dc3545;
+    }
+    
+    /* Form layout */
+    .form-content {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    /* Section dividers */
+    .section-divider {
+      border-top: 1px solid #e9ecef;
+      margin: 1.5rem 0;
+    }
+    
+    /* Required field indicator */
+    .required-field::after {
+      content: "*";
+      color: #dc3545;
+      margin-left: 0.25rem;
+    }
+    
+    /* Form sections */
+    .form-section {
+      margin-bottom: 1rem;
+    }
+    
+    .form-section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #495057;
+      margin-bottom: 1rem;
+    }
+    
+    /* Help text */
+    .form-text {
+      color: #6c757d;
+      font-size: 0.875rem;
+    }
+    
+    /* Card footer */
+    .card-footer {
+      background-color: #f8f9fa;
+      border-top: 1px solid rgba(0, 0, 0, 0.125);
+      padding: 1rem 1.25rem;
+    }
+    
+    /* Status Badge */
+    .status-badge {
+      display: inline-block;
+      padding: 0.35em 0.65em;
+      font-size: 0.875em;
+      font-weight: 600;
+      line-height: 1;
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: baseline;
+      border-radius: 0.25rem;
+    }
+    
+    .status-Open {
+      background-color: #cff4fc;
+      color: #055160;
+    }
+    
+    .status-Closed {
+      background-color: #f8d7da;
+      color: #842029;
+    }
+    
+    .status-Complete {
+      background-color: #d1e7dd;
+      color: #0f5132;
+    }
+    
+    /* Work order info box */
+    .work-order-info {
+      background-color: #e9f7fe;
+      border-left: 4px solid #3498db;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      border-radius: .25rem;
+    }
+    
+    /* Field containers */
+    .field-box {
+      background-color: #f8f9fa;
+      border-radius: .25rem;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    
+    .field-label {
+      font-size: 0.875rem;
+      color: #6c757d;
+      margin-bottom: 0.25rem;
+    }
+    
+    .field-value {
+      font-weight: 500;
+    }
+    
+    /* Select2 customization */
+    .select2-container--default .select2-selection--single {
+      height: calc(1.5em + 0.75rem + 2px);
+      padding: 0.375rem 0.75rem;
+      border: 1px solid #ced4da;
+      border-radius: 0.25rem;
+    }
+    
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+      line-height: calc(1.5em + 0.75rem);
+    }
+    
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+      height: calc(1.5em + 0.75rem + 2px);
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top py-2">
+    <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+      <img src="{{ url_for('static', filename='RMJ logo.png') }}" alt="RMJ Logo" class="mr-2">
+      <span class="h5 mb-0 d-none d-sm-inline">RMJ Dashboard</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav mr-auto">
+        <!-- Work Orders -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="woDropdown" role="button" data-toggle="dropdown">Work Orders</a>
+          <div class="dropdown-menu" aria-labelledby="woDropdown">
+            <a class="dropdown-item" href="{{ url_for('index') }}">Open</a>
+            <a class="dropdown-item" href="{{ url_for('completed_work_orders') }}">Completed</a>
+            <a class="dropdown-item" href="{{ url_for('closed_work_orders') }}">Closed</a>
+          </div>
+        </li>
+        <!-- Projects - New Section -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="projectsDropdown" role="button" data-toggle="dropdown">Projects</a>
+          <div class="dropdown-menu" aria-labelledby="projectsDropdown">
+            <a class="dropdown-item" href="{{ url_for('projects') }}">All Projects</a>
+            <a class="dropdown-item" href="{{ url_for('new_project') }}">New Project</a>
+          </div>
+        </li>
+        <!-- Timesheets -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="tsDropdown" role="button" data-toggle="dropdown">Timesheets</a>
+          <div class="dropdown-menu" aria-labelledby="tsDropdown">
+            <a class="dropdown-item" href="{{ url_for('new_timesheet') }}">New Entry</a>
+            <a class="dropdown-item" href="{{ url_for('select_weekly_timesheet') }}">Select Weekly</a>
+            <a class="dropdown-item" href="/workorder/reassign_entries">Reassign Entries</a>
+          </div>
+        </li>
+        <!-- Actions -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="actionsDropdown" role="button" data-toggle="dropdown">Actions</a>
+          <div class="dropdown-menu" aria-labelledby="actionsDropdown">
+            <a class="dropdown-item" href="{{ url_for('new_work_order') }}">Create WO</a>
+            <a class="dropdown-item" href="{{ url_for('import_excel') }}">Import Excel</a>
+            <a class="dropdown-item" href="{{ url_for('export_excel') }}">Export Excel</a>
+          </div>
+        </li>
+        <!-- Admin -->
+        {% if session.get('user_id') and (User.query.get(session.get('user_id')).role.lower() == 'admin' or User.query.get(session.get('user_id')).username.lower() == 'admin') %}
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-toggle="dropdown">Admin</a>
+          <div class="dropdown-menu" aria-labelledby="adminDropdown">
+            <a class="dropdown-item" href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+            <a class="dropdown-item" href="{{ url_for('admin_users') }}">User Mgmt</a>
+            <a class="dropdown-item" href="{{ url_for('admin_import_time_entries') }}">Import Time</a>
+            <a class="dropdown-item" href="{{ url_for('admin_email_settings') }}">Notifications</a>
+          </div>
+        </li>
+        {% endif %}
+      </ul>
+      <!-- Search inputs -->
+      <div class="d-flex flex-column flex-md-row">
+        <!-- Search all work orders -->
+        <form class="form-inline my-2 my-lg-0" action="{{ url_for('search') }}" method="get">
+          <input type="hidden" name="status" value="all">
+          <div class="input-group input-group-sm">
+            <input class="form-control form-control-sm" name="query" type="search" placeholder="Search All WOs" aria-label="Search All">
+            <div class="input-group-append">
+              <button class="btn btn-outline-primary btn-sm" type="submit">Search</button>
+            </div>
+          </div>
+        </form>
+      </div>
+      <ul class="navbar-nav ml-md-3 mt-2 mt-md-0">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container-fluid mt-4">
+    <div class="form-content">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h2 mb-0">Edit Work Order - ID {{ work_order.id }}</h1>
+        <span class="status-badge status-{{ work_order.status }}">{{ work_order.status }}</span>
+      </div>
+      
+      <div class="work-order-info mb-4">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="field-box">
+              <div class="field-label">Current RMJ Job Number</div>
+              <div class="field-value">{{ work_order.rmj_job_number }}</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="field-box">
+              <div class="field-label">Current Customer WO Number</div>
+              <div class="field-value">{{ work_order.customer_work_order_number }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-lg-8">
+          <!-- Main form card -->
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">Edit Work Order Details</h5>
+            </div>
+            <div class="card-body">
+              <form method="POST">
+                <!-- Identification Section -->
+                <div class="form-section">
+                  <div class="form-section-title">Identification</div>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="customer_work_order_number">Customer Work Order Number:</label>
+                        <input type="text" id="customer_work_order_number" name="customer_work_order_number" class="form-control" value="{{ work_order.customer_work_order_number }}" required>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="rmj_job_number" class="required-field">RMJ Job Number:</label>
+                        <input type="text" id="rmj_job_number" name="rmj_job_number" class="form-control" value="{{ work_order.rmj_job_number }}" required>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="description" class="required-field">Description:</label>
+                    <input type="text" id="description" name="description" class="form-control" value="{{ work_order.description }}">
+                  </div>
+                </div>
+                
+                <!-- Status Section -->
+                <div class="section-divider"></div>
+                <div class="form-section">
+                  <div class="form-section-title">Status & Assignment</div>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="status" class="required-field">Status:</label>
+                        <select id="status" name="status" class="form-control">
+                          <option value="Open" {% if work_order.status=='Open' %}selected{% endif %}>Open</option>
+                          <option value="Closed" {% if work_order.status=='Closed' %}selected{% endif %}>Closed</option>
+                          <option value="Complete" {% if work_order.status=='Complete' %}selected{% endif %}>Complete</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="owner">Owner:</label>
+                        <input type="text" id="owner" name="owner" class="form-control" value="{{ work_order.owner }}">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Details Section -->
+                <div class="section-divider"></div>
+                <div class="form-section">
+                  <div class="form-section-title">Details</div>
+                  <div class="row">
+                    <div class="col-md-4">
+                      <div class="form-group">
+                        <label for="estimated_hours">Estimated Hours:</label>
+                        <input type="number" step="0.1" id="estimated_hours" name="estimated_hours" class="form-control" value="{{ work_order.estimated_hours }}" required>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="form-group">
+                        <label for="priority" class="required-field">Priority:</label>
+                        <select id="priority" name="priority" class="form-control" required>
+                          <option value="Low" {% if work_order.priority=='Low' %}selected{% endif %}>Low</option>
+                          <option value="Medium" {% if work_order.priority=='Medium' %}selected{% endif %}>Medium</option>
+                          <option value="High" {% if work_order.priority=='High' %}selected{% endif %}>High</option>
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label for="classification" class="required-field">Classification:</label>
+                        <select id="classification" name="classification" class="form-control" required>
+                          <option value="Contract/Project" {% if work_order.classification=='Contract/Project' %}selected{% endif %}>Contract/Project</option>
+                          <option value="Billable" {% if work_order.classification=='Billable' %}selected{% endif %}>Billable</option>
+                          <option value="Non-Billable" {% if work_order.classification=='Non-Billable' %}selected{% endif %}>Non-Billable</option>
+                        </select>
+                        <small class="form-text text-muted">Categorizes this work order for billing and reporting purposes</small>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="form-group">
+                        <label for="location">Location:</label>
+                        <input type="text" id="location" name="location" class="form-control" value="{{ work_order.location }}">
+                      </div>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="scheduled_date">Scheduled Date:</label>
+                    <input type="date" id="scheduled_date" name="scheduled_date" class="form-control" value="{{ work_order.scheduled_date.strftime('%Y-%m-%d') if work_order.scheduled_date else '' }}">
+                  </div>
+                </div>
+                
+                <div class="form-group mt-4">
+                  <button type="submit" class="btn btn-success">Save Changes</button>
+                  <a href="{{ url_for('work_order_detail', work_order_id=work_order.id) }}" class="btn btn-secondary">Cancel</a>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-lg-4">
+          <!-- Work Order Stats -->
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">Work Order Stats</h5>
+            </div>
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <span>Hours Logged:</span>
+                <span class="badge badge-primary p-2">{{ work_order.hours_logged }}</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <span>Hours Remaining:</span>
+                <span class="badge {% if work_order.hours_remaining < 0 %}badge-danger{% else %}badge-success{% endif %} p-2">{{ work_order.hours_remaining }}</span>
+              </div>
+              <div class="section-divider"></div>
+              <div class="form-section-title">Quick Links</div>
+              <a href="{{ url_for('work_order_detail', work_order_id=work_order.id) }}" class="btn btn-outline-primary btn-block mb-2">View Work Order</a>
+              <a href="{{ url_for('upload_document', work_order_id=work_order.id) }}" class="btn btn-outline-info btn-block mb-2">Upload Document</a>
+              <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-block">Back to Dashboard</a>
+            </div>
+          </div>
+          
+          <!-- Status Info Card -->
+          <div class="card mt-3">
+            <div class="card-header">
+              <h5 class="mb-0">Status Information</h5>
+            </div>
+            <div class="card-body">
+              <p><strong class="text-primary">Open:</strong> Work that has not been completed</p>
+              <p><strong class="text-success">Complete:</strong> Work that is finished but not yet closed</p>
+              <p><strong class="text-danger">Closed:</strong> Work that is finished and administratively complete</p>
+              <div class="alert alert-warning mt-2 mb-0">
+                <small><strong>Note:</strong> Changing status to "Closed" or "Complete" will prevent adding new time entries.</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      // Initialize Select2 for dropdowns
+      $('select').select2({
+        theme: 'bootstrap',
+        width: '100%'
+      });
+    });
+  </script>
+</body>
+</html>
