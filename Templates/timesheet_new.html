@@ -615,8 +615,101 @@
             return false;
           }
           
+          // Calculate work hours
+          var startParts = timeIn.split(':');
+          var endParts = timeOut.split(':');
+          var startHour = parseInt(startParts[0]);
+          var startMin = parseInt(startParts[1]);
+          var endHour = parseInt(endParts[0]);
+          var endMin = parseInt(endParts[1]);
+          
+          var startMinutes = startHour * 60 + startMin;
+          var endMinutes = endHour * 60 + endMin;
+          
+          // Handle overnight
+          if (endMinutes < startMinutes) {
+            endMinutes += 24 * 60;
+          }
+          
+          var hoursWorked = (endMinutes - startMinutes) / 60;
+          
+          // Check if lunch is required
+          if (hoursWorked > 6 && !hadLunch) {
+            alert('Entry ' + i + ': Lunch break required!\n\n' +
+                  'You are working ' + hoursWorked.toFixed(1) + ' hours.\n' +
+                  'You must take a lunch break when working more than 6 hours.\n\n' +
+                  'Please check "Had lunch during work" and enter your lunch times.');
+            e.preventDefault();
+            return false;
+          }
+          
           // Validate lunch timing if lunch was taken
           if (hadLunch) {
+            var lunchStart = $('#lunch_start_' + i).val();
+            var lunchEnd = $('#lunch_end_' + i).val();
+            
+            // Validate lunch duration (minimum 30 minutes)
+            if (lunchStart && lunchEnd) {
+              var lunchStartParts = lunchStart.split(':');
+              var lunchEndParts = lunchEnd.split(':');
+              var lunchStartHour = parseInt(lunchStartParts[0]);
+              var lunchStartMin = parseInt(lunchStartParts[1]);
+              var lunchEndHour = parseInt(lunchEndParts[0]);
+              var lunchEndMin = parseInt(lunchEndParts[1]);
+              
+              var lunchStartMinutes = lunchStartHour * 60 + lunchStartMin;
+              var lunchEndMinutes = lunchEndHour * 60 + lunchEndMin;
+              
+              // Handle if lunch crosses midnight
+              if (lunchEndMinutes < lunchStartMinutes) {
+                lunchEndMinutes += 24 * 60;
+              }
+              
+              var lunchDuration = lunchEndMinutes - lunchStartMinutes;
+              
+              if (lunchDuration < 30) {
+                alert('Entry ' + i + ': Lunch break must be at least 30 minutes.\n\n' +
+                      'Your lunch is only ' + lunchDuration + ' minutes.\n\n' +
+                      'Please adjust your lunch times.');
+                e.preventDefault();
+                return false;
+              }
+            }
+            
+            // Validate lunch time window (10 AM - 2 PM)
+            if (lunchStart) {
+              var lunchStartParts = lunchStart.split(':');
+              var lunchStartHour = parseInt(lunchStartParts[0]);
+              var lunchStartMin = parseInt(lunchStartParts[1]);
+              var lunchStartMinutes = lunchStartHour * 60 + lunchStartMin;
+              var tenAM = 10 * 60;
+              var twoPM = 14 * 60;
+              
+              if (lunchStartMinutes < tenAM || lunchStartMinutes > twoPM) {
+                alert('Entry ' + i + ': Lunch must start between 10:00 AM and 2:00 PM.\n\n' +
+                      'Your lunch starts at ' + lunchStart + '.\n\n' +
+                      'Please adjust your lunch time.');
+                e.preventDefault();
+                return false;
+              }
+            }
+            
+            if (lunchEnd) {
+              var lunchEndParts = lunchEnd.split(':');
+              var lunchEndHour = parseInt(lunchEndParts[0]);
+              var lunchEndMin = parseInt(lunchEndParts[1]);
+              var lunchEndMinutes = lunchEndHour * 60 + lunchEndMin;
+              var tenAM = 10 * 60;
+              var twoPM = 14 * 60;
+              
+              if (lunchEndMinutes < tenAM || lunchEndMinutes > twoPM) {
+                alert('Entry ' + i + ': Lunch must end between 10:00 AM and 2:00 PM.\n\n' +
+                      'Your lunch ends at ' + lunchEnd + '.\n\n' +
+                      'Please adjust your lunch time.');
+                e.preventDefault();
+                return false;
+              }
+            }
             var lunchEnd = $('#lunch_end_' + i).val();
             
             if (timeIn && lunchEnd) {

@@ -514,6 +514,113 @@ def validate_lunch_timing(time_in, lunch_end):
     
     return {'valid': True}
 
+def calculate_daily_hours(engineer, work_date, exclude_entry_id=None):
+    """Calculate total hours worked by an engineer on a specific date across all work orders"""
+    # Get all time entries for this engineer on this date
+    query = TimeEntry.query.filter_by(
+        engineer=engineer,
+        work_date=work_date
+    )
+    
+    # Exclude the current entry if editing
+    if exclude_entry_id:
+        query = query.filter(TimeEntry.id != exclude_entry_id)
+    
+    entries = query.all()
+    
+    # Sum up all hours worked
+    total_hours = sum(entry.hours_worked for entry in entries)
+    
+    # Check if any of these entries have lunch
+    has_lunch = any(entry.lunch_start and entry.lunch_end for entry in entries)
+    
+    return {
+        'total_hours': total_hours,
+        'has_lunch': has_lunch,
+        'entry_count': len(entries)
+    }
+
+def validate_lunch_requirements(engineer, work_date, time_in, time_out, had_lunch, lunch_start, lunch_end, exclude_entry_id=None):
+    """Validate that lunch is taken if working more than 6 hours (across all work orders for the day) and within proper time window"""
+    # Calculate hours for this specific entry
+    ref_date = date.today()
+    start_dt = datetime.combine(ref_date, time_in)
+    end_dt = datetime.combine(ref_date, time_out)
+    
+    if end_dt < start_dt:
+        end_dt += timedelta(days=1)
+    
+    current_entry_hours = (end_dt - start_dt).total_seconds() / 3600.0
+    
+    # Get total hours already worked on this day (excluding current entry)
+    daily_totals = calculate_daily_hours(engineer, work_date, exclude_entry_id)
+    
+    # Calculate total hours including this entry (before lunch deduction)
+    total_daily_hours = daily_totals['total_hours'] + current_entry_hours
+    
+    # Check if lunch has been taken today (either in this entry or previous entries)
+    lunch_taken_today = daily_totals['has_lunch'] or had_lunch
+    
+    # Check if lunch is required (more than 6 hours total for the day)
+    if total_daily_hours > 6.0 and not lunch_taken_today:
+        return {
+            'valid': False,
+            'message': f"Lunch break required! You are working {total_daily_hours:.1f} hours total today ({daily_totals['entry_count']} previous entries + this entry). You must take a lunch break when working more than 6 hours in a day."
+        }
+    
+    # If they took lunch, validate the time window (10 AM - 2 PM)
+    if had_lunch and lunch_start and lunch_end:
+        lunch_window_start = time_class(10, 0)  # 10:00 AM
+        lunch_window_end = time_class(14, 0)    # 2:00 PM
+        
+        # Check if lunch start is within the window
+        if lunch_start < lunch_window_start or lunch_start > lunch_window_end:
+            return {
+                'valid': False,
+                'message': f"Lunch must start between 10:00 AM and 2:00 PM. Your lunch starts at {lunch_start.strftime('%I:%M %p')}."
+            }
+        
+        # Check if lunch end is within the window
+        if lunch_end < lunch_window_end:
+            # Only check upper bound - lunch can end at 2 PM or earlier
+            if lunch_end < lunch_window_start:
+                return {
+                    'valid': False,
+                    'message': f"Lunch must be between 10:00 AM and 2:00 PM. Your lunch ends at {lunch_end.strftime('%I:%M %p')}."
+                }
+        else:
+            return {
+                'valid': False,
+                'message': f"Lunch must end by 2:00 PM. Your lunch ends at {lunch_end.strftime('%I:%M %p')}."
+            }
+    
+    return {'valid': True}
+
+def validate_lunch_duration(lunch_start, lunch_end):
+    """Validate that lunch is at least 30 minutes"""
+    if not lunch_start or not lunch_end:
+        return {'valid': True}
+    
+    # Create datetime objects for comparison
+    ref_date = date.today()
+    start_dt = datetime.combine(ref_date, lunch_start)
+    end_dt = datetime.combine(ref_date, lunch_end)
+    
+    # Handle if lunch end is "earlier" than start (crosses midnight)
+    if end_dt < start_dt:
+        end_dt += timedelta(days=1)
+    
+    # Calculate lunch duration in minutes
+    lunch_minutes = (end_dt - start_dt).total_seconds() / 60.0
+    
+    if lunch_minutes < 30:
+        return {
+            'valid': False,
+            'message': f"Lunch break must be at least 30 minutes. Your lunch is only {lunch_minutes:.0f} minutes."
+        }
+    
+    return {'valid': True}
+
 def get_week_dates(year, week):
     """Get the start and end dates for a week"""
     try:
@@ -1406,6 +1513,7 @@ def add_time_inline(work_order_id):
     hours_worked = calculate_hours(work_date, time_in, time_out)
 
     # Handle lunch deduction
+    # Handle lunch deduction
     had_lunch = request.form.get('had_lunch') == 'on'
     lunch_start = None
     lunch_end = None
@@ -1419,11 +1527,25 @@ def add_time_inline(work_order_id):
             lunch_start = parse_time(lunch_start_str)
             lunch_end = parse_time(lunch_end_str)
             
+            # Validate lunch duration (must be at least 30 minutes)
+            duration_validation = validate_lunch_duration(lunch_start, lunch_end)
+            if not duration_validation['valid']:
+                flash(duration_validation['message'], 'danger')
+                return redirect(url_for('work_order_detail', work_order_id=work_order_id))
+            
             # Validate lunch timing (must be within 6 hours of start)
             lunch_validation = validate_lunch_timing(time_in, lunch_end)
             if not lunch_validation['valid']:
                 flash(lunch_validation['message'], 'danger')
                 return redirect(url_for('work_order_detail', work_order_id=work_order_id))
+
+    # Validate lunch requirements (must take lunch if working > 6 hours across all work orders today)
+    lunch_req_validation = validate_lunch_requirements(engineer, work_date, time_in, time_out, had_lunch, lunch_start, lunch_end)
+    if not lunch_req_validation['valid']:
+        flash(lunch_req_validation['message'], 'warning')
+        return redirect(url_for('work_order_detail', work_order_id=work_order_id))
+
+    if had_lunch and lunch_start and lunch_end:
             
             # Calculate overlap between work time and lunch time
             lunch_deduction = calculate_lunch_overlap(work_date, time_in, time_out, lunch_start, lunch_end)
@@ -1704,6 +1826,23 @@ def update_time_entry_ajax(entry_id):
 
         entry.lunch_deduction = lunch_deduction
         entry.hours_worked = max(0, base_hours - lunch_deduction)
+        # Validate lunch requirements for edited entry
+        had_lunch = bool(entry.lunch_start and entry.lunch_end)
+        lunch_req_validation = validate_lunch_requirements(
+            entry.engineer, 
+            entry.work_date, 
+            entry.time_in, 
+            entry.time_out, 
+            had_lunch, 
+            entry.lunch_start, 
+            entry.lunch_end,
+            exclude_entry_id=entry.id
+        )
+        if not lunch_req_validation['valid']:
+            return jsonify({
+                'success': False,
+                'error': lunch_req_validation['message']
+            }), 400
 
         # Log the update
         log_change(
@@ -1847,6 +1986,7 @@ def new_timesheet():
                     continue
 
                 # Check for time overlap with existing entries
+                # Check for time overlap with existing entries
                 overlap_check = check_time_overlap(int(work_order_id), engineer, work_date, time_in, time_out)
                 if overlap_check['overlap']:
                     flash(f"Entry {i}: {overlap_check['message']}", 'danger')
@@ -1874,6 +2014,18 @@ def new_timesheet():
                         lunch_start = parse_time(lunch_start_str)
                         lunch_end = parse_time(lunch_end_str)
                         
+                        # Validate lunch duration (must be at least 30 minutes)
+                        duration_validation = validate_lunch_duration(lunch_start, lunch_end)
+                        if not duration_validation['valid']:
+                            flash(f"Entry {i}: {duration_validation['message']}", 'danger')
+                            work_orders = WorkOrder.query.all()
+                            users = User.query.order_by(User.full_name.nulls_last(), User.username).all()
+                            return render_template('timesheet_new.html', 
+                                                work_orders=work_orders, 
+                                                default_engineer=default_engineer,
+                                                current_user_id=current_user_id,
+                                                users=users)
+                        
                         # Validate lunch timing (must be within 6 hours of start)
                         lunch_validation = validate_lunch_timing(time_in, lunch_end)
                         if not lunch_validation['valid']:
@@ -1885,6 +2037,21 @@ def new_timesheet():
                                                 default_engineer=default_engineer,
                                                 current_user_id=current_user_id,
                                                 users=users)
+
+                # Validate lunch requirements (must take lunch if working > 6 hours across all work orders today)
+                # Note: lunch_start and lunch_end are now defined (either as None or as parsed times)
+                lunch_req_validation = validate_lunch_requirements(engineer, work_date, time_in, time_out, had_lunch, lunch_start, lunch_end)
+                if not lunch_req_validation['valid']:
+                    flash(f"Entry {i}: {lunch_req_validation['message']}", 'warning')
+                    work_orders = WorkOrder.query.all()
+                    users = User.query.order_by(User.full_name.nulls_last(), User.username).all()
+                    return render_template('timesheet_new.html', 
+                                        work_orders=work_orders, 
+                                        default_engineer=default_engineer,
+                                        current_user_id=current_user_id,
+                                        users=users)
+
+                if had_lunch and lunch_start and lunch_end:
                         
                         # Calculate overlap between work time and lunch time
                         lunch_deduction = calculate_lunch_overlap(work_date, time_in, time_out, lunch_start, lunch_end)

@@ -810,6 +810,11 @@
                         <i class="fas fa-exclamation-triangle mr-2"></i> Cannot add time entries to a work order that is Closed or Complete.
                       </div>
                     {% else %}
+                    <div class="alert alert-info" id="daily-hours-info" style="display: none;">
+                      <i class="fas fa-info-circle mr-2"></i>
+                      <strong>Daily Hours Reminder:</strong>
+                      <span id="daily-hours-text"></span>
+                    </div>
                       <form action="{{ url_for('add_time_inline', work_order_id=work_order.id) }}" method="POST" class="mb-4">
                         <div class="form-row">
                           <div class="form-group col-md-3">
@@ -1558,45 +1563,44 @@
 
   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-
-    // Request Manager for preventing duplicate AJAX calls
-    var RequestManager = {
-        pendingRequests: {},
-        debounceTimers: {},
-        
-        // Debounced request with deduplication
-        makeRequest: function(key, requestFn, delay) {
-            delay = delay || 300; // Default 300ms delay
-            
-            // Clear any existing timer for this key
-            if (this.debounceTimers[key]) {
-                clearTimeout(this.debounceTimers[key]);
-            }
-            
-            // Cancel any pending request for this key
-            if (this.pendingRequests[key]) {
-                this.pendingRequests[key].abort();
-                delete this.pendingRequests[key];
-            }
-            
-            // Set up new debounced request
-            this.debounceTimers[key] = setTimeout(() => {
-                // Execute the request and store the jqXHR object
-                this.pendingRequests[key] = requestFn();
-                
-                // Clean up when request completes
-                if (this.pendingRequests[key]) {
-                    this.pendingRequests[key].always(() => {
-                        delete this.pendingRequests[key];
-                    });
-                }
-                
-                delete this.debounceTimers[key];
-            }, delay);
-        }
-    };
-    
+<script>
+  // Request Manager for preventing duplicate AJAX calls
+  var RequestManager = {
+      pendingRequests: {},
+      debounceTimers: {},
+      
+      // Debounced request with deduplication
+      makeRequest: function(key, requestFn, delay) {
+          delay = delay || 300; // Default 300ms delay
+          
+          // Clear any existing timer for this key
+          if (this.debounceTimers[key]) {
+              clearTimeout(this.debounceTimers[key]);
+          }
+          
+          // Cancel any pending request for this key
+          if (this.pendingRequests[key]) {
+              this.pendingRequests[key].abort();
+              delete this.pendingRequests[key];
+          }
+          
+          // Set up new debounced request
+          this.debounceTimers[key] = setTimeout(() => {
+              // Execute the request and store the jqXHR object
+              this.pendingRequests[key] = requestFn();
+              
+              // Clean up when request completes
+              if (this.pendingRequests[key]) {
+                  this.pendingRequests[key].always(() => {
+                      delete this.pendingRequests[key];
+                  });
+              }
+              
+              delete this.debounceTimers[key];
+          }, delay);
+      }
+  };
+  
   $(document).ready(function() {
     // Toggle edit mode for work order details
     $('#edit-mode-btn, #edit-mode-btn-header').click(function() {
@@ -1676,6 +1680,172 @@
     if (lastTab) {
       $('a[href="' + lastTab + '"]').tab('show');
     }
+    
+    // Lunch checkbox toggle
+    $('#had_lunch').change(function() {
+      if ($(this).is(':checked')) {
+        $('#lunch_times').slideDown();
+        $('#lunch_end_group').slideDown();
+      } else {
+        $('#lunch_times').slideUp();
+        $('#lunch_end_group').slideUp();
+        $('#lunch_start').val('');
+        $('#lunch_end').val('');
+      }
+    });
+    
+    // Check daily hours on page load and show info
+    $('input[name="time_out"]').on('change', function() {
+      // Calculate current entry hours
+      var timeIn = $('input[name="time_in"]').val();
+      var timeOut = $(this).val();
+      
+      if (timeIn && timeOut) {
+        var startParts = timeIn.split(':');
+        var endParts = timeOut.split(':');
+        var startHour = parseInt(startParts[0]);
+        var startMin = parseInt(startParts[1]);
+        var endHour = parseInt(endParts[0]);
+        var endMin = parseInt(endParts[1]);
+        
+        var startMinutes = startHour * 60 + startMin;
+        var endMinutes = endHour * 60 + endMin;
+        
+        if (endMinutes < startMinutes) {
+          endMinutes += 24 * 60;
+        }
+        
+        var hours = (endMinutes - startMinutes) / 60;
+        
+        if (hours > 4) {
+          $('#daily-hours-info').show();
+          $('#daily-hours-text').text('You are entering ' + hours.toFixed(1) + ' hours. Remember: If your total hours today exceed 6 hours across all work orders, you must take a lunch break between 10:00 AM and 2:00 PM.');
+        } else {
+          $('#daily-hours-info').hide();
+        }
+      }
+    });
+    
+    // Validate lunch timing on form submit
+    $('form').not('#edit-form').submit(function(e) {
+      const timeIn = $('input[name="time_in"]').val();
+      const timeOut = $('input[name="time_out"]').val();
+      const hadLunch = $('#had_lunch').is(':checked');
+      
+      // Calculate work hours
+      if (timeIn && timeOut) {
+        const startParts = timeIn.split(':');
+        const endParts = timeOut.split(':');
+        const startHour = parseInt(startParts[0]);
+        const startMin = parseInt(startParts[1]);
+        const endHour = parseInt(endParts[0]);
+        const endMin = parseInt(endParts[1]);
+        
+        let startMinutes = startHour * 60 + startMin;
+        let endMinutes = endHour * 60 + endMin;
+        
+        // Handle overnight
+        if (endMinutes < startMinutes) {
+          endMinutes += 24 * 60;
+        }
+        
+        const hoursWorked = (endMinutes - startMinutes) / 60;
+        
+        // Note: We're not enforcing 6-hour rule here because server will check across all entries
+        // But we can still validate lunch time window if lunch was taken
+      }
+      
+      if (hadLunch) {
+        const lunchStart = $('#lunch_start').val();
+        const lunchEnd = $('#lunch_end').val();
+        
+        // Validate lunch duration (minimum 30 minutes)
+        if (lunchStart && lunchEnd) {
+          const lunchStartParts = lunchStart.split(':');
+          const lunchEndParts = lunchEnd.split(':');
+          const lunchStartHour = parseInt(lunchStartParts[0]);
+          const lunchStartMin = parseInt(lunchStartParts[1]);
+          const lunchEndHour = parseInt(lunchEndParts[0]);
+          const lunchEndMin = parseInt(lunchEndParts[1]);
+          
+          let lunchStartMinutes = lunchStartHour * 60 + lunchStartMin;
+          let lunchEndMinutes = lunchEndHour * 60 + lunchEndMin;
+          
+          // Handle if lunch crosses midnight
+          if (lunchEndMinutes < lunchStartMinutes) {
+            lunchEndMinutes += 24 * 60;
+          }
+          
+          const lunchDuration = lunchEndMinutes - lunchStartMinutes;
+          
+          if (lunchDuration < 30) {
+            e.preventDefault();
+            alert('Lunch break must be at least 30 minutes.\n\nYour lunch is only ' + lunchDuration + ' minutes.\n\nPlease adjust your lunch times.');
+            $('#lunch_end').focus();
+            return false;
+          }
+        }
+        
+        // Validate lunch time window (10 AM - 2 PM)
+        if (lunchStart) {
+          const lunchStartParts = lunchStart.split(':');
+          const lunchStartHour = parseInt(lunchStartParts[0]);
+          const lunchStartMin = parseInt(lunchStartParts[1]);
+          const lunchStartMinutes = lunchStartHour * 60 + lunchStartMin;
+          const tenAM = 10 * 60;  // 600 minutes
+          const twoPM = 14 * 60;  // 840 minutes
+          
+          if (lunchStartMinutes < tenAM || lunchStartMinutes > twoPM) {
+            e.preventDefault();
+            alert('Lunch must start between 10:00 AM and 2:00 PM.\n\nYour lunch starts at ' + lunchStart + '.\n\nPlease adjust your lunch time.');
+            $('#lunch_start').focus();
+            return false;
+          }
+        }
+        
+        if (lunchEnd) {
+          const lunchEndParts = lunchEnd.split(':');
+          const lunchEndHour = parseInt(lunchEndParts[0]);
+          const lunchEndMin = parseInt(lunchEndParts[1]);
+          const lunchEndMinutes = lunchEndHour * 60 + lunchEndMin;
+          const tenAM = 10 * 60;
+          const twoPM = 14 * 60;
+          
+          if (lunchEndMinutes < tenAM || lunchEndMinutes > twoPM) {
+            e.preventDefault();
+            alert('Lunch must end between 10:00 AM and 2:00 PM.\n\nYour lunch ends at ' + lunchEnd + '.\n\nPlease adjust your lunch time.');
+            $('#lunch_end').focus();
+            return false;
+          }
+        }
+        
+        // Validate lunch end within 6 hours of start
+        if (timeIn && lunchEnd) {
+          const startParts = timeIn.split(':');
+          const lunchParts = lunchEnd.split(':');
+          const startHour = parseInt(startParts[0]);
+          const startMin = parseInt(startParts[1]);
+          const lunchHour = parseInt(lunchParts[0]);
+          const lunchMin = parseInt(lunchParts[1]);
+          
+          let startMinutes = startHour * 60 + startMin;
+          let lunchMinutes = lunchHour * 60 + lunchMin;
+          
+          if (lunchMinutes < startMinutes) {
+            lunchMinutes += 24 * 60;
+          }
+          
+          const hoursDiff = (lunchMinutes - startMinutes) / 60;
+          
+          if (hoursDiff > 6) {
+            e.preventDefault();
+            alert('Lunch must be taken within 6 hours of start time.\n\nStart: ' + timeIn + '\nLunch End: ' + lunchEnd + '\nTime difference: ' + hoursDiff.toFixed(1) + ' hours\n\nPlease adjust your lunch time.');
+            $('#lunch_end').focus();
+            return false;
+          }
+        }
+      }
+    });
     
     // Enter edit mode for time entry - Modified with JL/JT protection
     $(document).on('click', '.edit-entry-btn', function() {
@@ -1973,55 +2143,6 @@
     
     form.submit();
   }
-
-  // Lunch checkbox toggle
-  $('#had_lunch').change(function() {
-    if ($(this).is(':checked')) {
-      $('#lunch_times').slideDown();
-      $('#lunch_end_group').slideDown();
-    } else {
-      $('#lunch_times').slideUp();
-      $('#lunch_end_group').slideUp();
-      $('#lunch_start').val('');
-      $('#lunch_end').val('');
-    }
-  });
-
-  // Validate lunch timing on form submit
-  $('form').submit(function(e) {
-    const hadLunch = $('#had_lunch').is(':checked');
-    
-    if (hadLunch) {
-      const timeIn = $('input[name="time_in"]').val();
-      const lunchEnd = $('#lunch_end').val();
-      
-      if (timeIn && lunchEnd) {
-        // Parse times
-        const [startHour, startMin] = timeIn.split(':').map(Number);
-        const [lunchHour, lunchMin] = lunchEnd.split(':').map(Number);
-        
-        // Convert to minutes since midnight
-        const startMinutes = startHour * 60 + startMin;
-        let lunchMinutes = lunchHour * 60 + lunchMin;
-        
-        // Handle overnight (if lunch is "earlier" than start, add 24 hours)
-        if (lunchMinutes < startMinutes) {
-          lunchMinutes += 24 * 60;
-        }
-        
-        // Calculate difference in hours
-        const hoursDiff = (lunchMinutes - startMinutes) / 60;
-        
-        if (hoursDiff > 6) {
-          e.preventDefault();
-          alert(`Lunch must be taken within 6 hours of start time.\n\nStart: ${timeIn}\nLunch End: ${lunchEnd}\nTime difference: ${hoursDiff.toFixed(1)} hours\n\nPlease adjust your lunch time.`);
-          $('#lunch_end').focus();
-          return false;
-        }
-      }
-    }
-  });
-
-  </script>
+</script>
 </body>
 </html>
