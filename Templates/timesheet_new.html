@@ -456,217 +456,215 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-  <script>
-    $(document).ready(function() {
-      // Initialize Select2 for dropdowns
-      $('.select2').select2({
-        placeholder: 'Select a work order',
-        width: '100%',
-        templateResult: formatWorkOrder
-      });
+<script>
+  $(document).ready(function() {
+    // Initialize Select2 for dropdowns
+    $('.select2').select2({
+      placeholder: 'Select a work order',
+      width: '100%',
+      templateResult: formatWorkOrder
+    });
+    
+    // Format work orders in the dropdown
+    function formatWorkOrder(workOrder) {
+      if (!workOrder.id) return workOrder.text;
       
-      // Format work orders in the dropdown
-      function formatWorkOrder(workOrder) {
-        if (!workOrder.id) return workOrder.text;
-        
-        var $option = $(workOrder.element);
-        var status = $option.data('status');
-        
-        if (status === 'Closed' || status === 'Complete') {
-          var $result = $('<span></span>');
-          $result.text(workOrder.text);
-          $result.append(' <span class="text-danger">(Cannot select: ' + status + ')</span>');
-          return $result;
-        }
-        
-        return workOrder.text;
+      var $option = $(workOrder.element);
+      var status = $option.data('status');
+      
+      if (status === 'Closed' || status === 'Complete') {
+        var $result = $('<span></span>');
+        $result.text(workOrder.text);
+        $result.append(' <span class="text-danger">(Cannot select: ' + status + ')</span>');
+        return $result;
       }
       
-      // Set today's date in the sidebar
-      var today = new Date();
-      var formattedDate = today.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-      $('#today-date').text(formattedDate);
+      return workOrder.text;
+    }
+    
+    // Set today's date in the sidebar
+    var today = new Date();
+    var formattedDate = today.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    $('#today-date').text(formattedDate);
+    
+    // Use today's date button
+    $('#use-today-btn').click(function() {
+      var yyyy = today.getFullYear();
+      var mm = String(today.getMonth() + 1).padStart(2, '0');
+      var dd = String(today.getDate()).padStart(2, '0');
+      var formattedDateValue = yyyy + '-' + mm + '-' + dd;
       
-      // Use today's date button
-      $('#use-today-btn').click(function() {
-        var yyyy = today.getFullYear();
-        var mm = String(today.getMonth() + 1).padStart(2, '0');
-        var dd = String(today.getDate()).padStart(2, '0');
-        var formattedDateValue = yyyy + '-' + mm + '-' + dd;
-        
-        // Set today's date for all empty date fields
-        for (var i = 1; i <= 5; i++) {
-          var dateField = $('#work_date_' + i);
-          if (!dateField.val()) {
-            dateField.val(formattedDateValue);
-          }
-        }
-      });
-      
-      // Calculate hours when time in/out changes
-      $('.time-input').on('change', function() {
-        var entryId = $(this).data('entry-id');
-        calculateHours(entryId);
-      });
-      
-      // Function to calculate hours between time in and time out
-      function calculateHours(entryId) {
-        var timeInEl = $('#time_in_' + entryId);
-        var timeOutEl = $('#time_out_' + entryId);
-        var calculationEl = $('#hours-calculation-' + entryId);
-        
-        if (timeInEl.val() && timeOutEl.val()) {
-          // Use a reference date to calculate the difference
-          var today = new Date().toISOString().split('T')[0];
-          var timeIn = new Date(today + 'T' + timeInEl.val() + ':00');
-          var timeOut = new Date(today + 'T' + timeOutEl.val() + ':00');
-          
-          // If time out is earlier than time in, assume it's the next day
-          if (timeOut < timeIn) {
-            timeOut.setDate(timeOut.getDate() + 1);
-          }
-          
-          // Calculate the difference in hours
-          var diffMs = timeOut - timeIn;
-          var diffHrs = diffMs / (1000 * 60 * 60);
-          
-          // Display the calculation
-          calculationEl.find('.hours-value').text(diffHrs.toFixed(2));
-          calculationEl.show();
-        } else {
-          calculationEl.hide();
+      // Set today's date for all empty date fields
+      for (var i = 1; i <= 5; i++) {
+        var dateField = $('#work_date_' + i);
+        if (!dateField.val()) {
+          dateField.val(formattedDateValue);
         }
       }
+    });
+    
+    // Calculate hours when time in/out changes
+    $('.time-input').on('change', function() {
+      var entryId = $(this).data('entry-id');
+      calculateHours(entryId);
+    });
+    
+    // Function to calculate hours between time in and time out
+    function calculateHours(entryId) {
+      var timeInEl = $('#time_in_' + entryId);
+      var timeOutEl = $('#time_out_' + entryId);
+      var calculationEl = $('#hours-calculation-' + entryId);
       
-      // Form validation before submit
-      // Form validation before submit
-      $('#timesheet-form').submit(function(e) {
-        var valid = false;
+      if (timeInEl.val() && timeOutEl.val()) {
+        // Use a reference date to calculate the difference
+        var today = new Date().toISOString().split('T')[0];
+        var timeIn = new Date(today + 'T' + timeInEl.val() + ':00');
+        var timeOut = new Date(today + 'T' + timeOutEl.val() + ':00');
         
-        // Check if at least one entry is complete
-        for (var i = 1; i <= 5; i++) {
-          var workOrderId = $('#work_order_id_' + i).val();
-          var engineerUser = $('#engineer_user_' + i).val();
-          var workDate = $('#work_date_' + i).val();
-          var timeIn = $('#time_in_' + i).val();
-          var timeOut = $('#time_out_' + i).val();
-          var hadLunch = $('#had_lunch_' + i).is(':checked');
+        // If time out is earlier than time in, assume it's the next day
+        if (timeOut < timeIn) {
+          timeOut.setDate(timeOut.getDate() + 1);
+        }
+        
+        // Calculate the difference in hours
+        var diffMs = timeOut - timeIn;
+        var diffHrs = diffMs / (1000 * 60 * 60);
+        
+        // Display the calculation
+        calculationEl.find('.hours-value').text(diffHrs.toFixed(2));
+        calculationEl.show();
+      } else {
+        calculationEl.hide();
+      }
+    }
+    
+    // Lunch checkbox toggle for all entries
+    $('.lunch-checkbox').change(function() {
+      const entryId = $(this).data('entry');
+      if ($(this).is(':checked')) {
+        $(`#lunch_times_${entryId}`).slideDown();
+      } else {
+        $(`#lunch_times_${entryId}`).slideUp();
+        $(`#lunch_start_${entryId}`).val('');
+        $(`#lunch_end_${entryId}`).val('');
+      }
+    });
+    
+    // Clear entry button functionality
+    $('.clear-entry-btn').click(function() {
+      const entryId = $(this).data('entry');
+      
+      // Confirm before clearing
+      if (confirm(`Are you sure you want to clear Entry ${entryId}?`)) {
+        // Clear work order selection
+        $(`#work_order_id_${entryId}`).val('').trigger('change');
+        
+        // Clear engineer
+        $(`#engineer_user_${entryId}`).val('').trigger('change');
+        
+        // Clear date
+        $(`#work_date_${entryId}`).val('');
+        
+        // Clear times
+        $(`#time_in_${entryId}`).val('');
+        $(`#time_out_${entryId}`).val('');
+        
+        // Clear description
+        $(`#description_${entryId}`).val('');
+        
+        // Clear and hide lunch
+        $(`#had_lunch_${entryId}`).prop('checked', false);
+        $(`#lunch_times_${entryId}`).hide();
+        $(`#lunch_start_${entryId}`).val('');
+        $(`#lunch_end_${entryId}`).val('');
+        
+        // Reset lunch button styling
+        $(`.lunch-checkbox[data-entry="${entryId}"]`).prop('checked', false);
+        
+        // Hide hours calculation if visible
+        $(`#hours-calculation-${entryId}`).hide();
+        
+        // Show success feedback
+        $(this).html('<i class="fas fa-check mr-1"></i> Cleared').removeClass('btn-danger').addClass('btn-success');
+        
+        // Reset button after 2 seconds
+        setTimeout(() => {
+          $(this).html('<i class="fas fa-times mr-1"></i> Clear').removeClass('btn-success').addClass('btn-danger');
+        }, 2000);
+      }
+    });
+    
+    // Form validation before submit
+    $('#timesheet-form').submit(function(e) {
+      var valid = false;
+      
+      // Check if at least one entry is complete
+      for (var i = 1; i <= 5; i++) {
+        var workOrderId = $('#work_order_id_' + i).val();
+        var engineerUser = $('#engineer_user_' + i).val();
+        var workDate = $('#work_date_' + i).val();
+        var timeIn = $('#time_in_' + i).val();
+        var timeOut = $('#time_out_' + i).val();
+        var hadLunch = $('#had_lunch_' + i).is(':checked');
+        
+        // If any entry has a work order selected, make sure all required fields are filled
+        if (workOrderId) {
+          if (!engineerUser || !workDate || !timeIn || !timeOut) {
+            alert('Please complete all required fields for Entry ' + i);
+            e.preventDefault();
+            return false;
+          }
           
-          // If any entry has a work order selected, validate it
-          if (workOrderId) {
-            if (!engineerUser || !workDate || !timeIn || !timeOut) {
-              alert('Please complete all required fields for Entry ' + i);
-              e.preventDefault();
-              return false;
-            }
+          // Validate lunch timing if lunch was taken
+          if (hadLunch) {
+            var lunchEnd = $('#lunch_end_' + i).val();
             
-            // Validate lunch timing if lunch was taken
-            if (hadLunch) {
-              var lunchEnd = $('#lunch_end_' + i).val();
+            if (timeIn && lunchEnd) {
+              // Parse times
+              var startParts = timeIn.split(':');
+              var lunchParts = lunchEnd.split(':');
               
-              if (timeIn && lunchEnd) {
-                // Parse times
-                var startParts = timeIn.split(':');
-                var lunchParts = lunchEnd.split(':');
-                
-                var startHour = parseInt(startParts[0]);
-                var startMin = parseInt(startParts[1]);
-                var lunchHour = parseInt(lunchParts[0]);
-                var lunchMin = parseInt(lunchParts[1]);
-                
-                // Convert to minutes since midnight
-                var startMinutes = startHour * 60 + startMin;
-                var lunchMinutes = lunchHour * 60 + lunchMin;
-                
-                // Handle overnight
-                if (lunchMinutes < startMinutes) {
-                  lunchMinutes += 24 * 60;
-                }
-                
-                // Calculate difference in hours
-                var hoursDiff = (lunchMinutes - startMinutes) / 60;
-                
-                if (hoursDiff > 6) {
-                  alert('Entry ' + i + ': Lunch must be taken within 6 hours of start time.\n\n' +
-                        'Start: ' + timeIn + '\n' +
-                        'Lunch End: ' + lunchEnd + '\n' +
-                        'Time difference: ' + hoursDiff.toFixed(1) + ' hours\n\n' +
-                        'Please adjust your lunch time.');
-                  e.preventDefault();
-                  return false;
-                }
+              var startHour = parseInt(startParts[0]);
+              var startMin = parseInt(startParts[1]);
+              var lunchHour = parseInt(lunchParts[0]);
+              var lunchMin = parseInt(lunchParts[1]);
+              
+              // Convert to minutes since midnight
+              var startMinutes = startHour * 60 + startMin;
+              var lunchMinutes = lunchHour * 60 + lunchMin;
+              
+              // Handle overnight
+              if (lunchMinutes < startMinutes) {
+                lunchMinutes += 24 * 60;
+              }
+              
+              // Calculate difference in hours
+              var hoursDiff = (lunchMinutes - startMinutes) / 60;
+              
+              if (hoursDiff > 6) {
+                alert('Entry ' + i + ': Lunch must be taken within 6 hours of start time.\n\n' +
+                      'Start: ' + timeIn + '\n' +
+                      'Lunch End: ' + lunchEnd + '\n' +
+                      'Time difference: ' + hoursDiff.toFixed(1) + ' hours\n\n' +
+                      'Please adjust your lunch time.');
+                e.preventDefault();
+                return false;
               }
             }
-            
-            valid = true;
           }
+          
+          valid = true;
         }
-        
-        // Rest of the original validation code
-        // Make sure at least one entry is complete
-        if (!valid) {
-          alert('Please complete at least one time entry');
-          e.preventDefault();
-          return false;
-        }
-      });
-
-      // Lunch checkbox toggle for all entries
-      $('.lunch-checkbox').change(function() {
-        const entryId = $(this).data('entry');
-        if ($(this).is(':checked')) {
-          $(`#lunch_times_${entryId}`).slideDown();
-        } else {
-          $(`#lunch_times_${entryId}`).slideUp();
-          $(`#lunch_start_${entryId}`).val('');
-          $(`#lunch_end_${entryId}`).val('');
-        }
-      });
-
-      // Clear entry button functionality
-      $('.clear-entry-btn').click(function() {
-        const entryId = $(this).data('entry');
-        
-        // Confirm before clearing
-        if (confirm(`Are you sure you want to clear Entry ${entryId}?`)) {
-          // Clear work order selection
-          $(`#work_order_id_${entryId}`).val('').trigger('change');
-          
-          // Clear engineer
-          $(`#engineer_user_${entryId}`).val('').trigger('change');
-          
-          // Clear date
-          $(`#work_date_${entryId}`).val('');
-          
-          // Clear times
-          $(`#time_in_${entryId}`).val('');
-          $(`#time_out_${entryId}`).val('');
-          
-          // Clear description
-          $(`#description_${entryId}`).val('');
-          
-          // Clear and hide lunch
-          $(`#had_lunch_${entryId}`).prop('checked', false);
-          $(`#lunch_times_${entryId}`).hide();
-          $(`#lunch_start_${entryId}`).val('');
-          $(`#lunch_end_${entryId}`).val('');
-          
-          // Reset lunch button styling
-          $(`.lunch-checkbox[data-entry="${entryId}"]`).prop('checked', false);
-          
-          // Hide hours calculation if visible
-          $(`#hours-calculation-${entryId}`).hide();
-          
-          // Show success feedback
-          $(this).html('<i class="fas fa-check mr-1"></i> Cleared').removeClass('btn-danger').addClass('btn-success');
-          
-          // Reset button after 2 seconds
-          setTimeout(() => {
-            $(this).html('<i class="fas fa-times mr-1"></i> Clear').removeClass('btn-success').addClass('btn-danger');
-          }, 2000);
-        }
-      });
-
-  </script>
+      }
+      
+      // Make sure at least one entry is complete
+      if (!valid) {
+        alert('Please complete at least one time entry');
+        e.preventDefault();
+        return false;
+      }
+    });
+  });
+</script>
 </body>
 </html>

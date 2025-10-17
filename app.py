@@ -425,10 +425,9 @@ def calculate_lunch_overlap(work_date, time_in, time_out, lunch_start, lunch_end
     return (overlap_end - overlap_start).total_seconds() / 3600.0
 
 def calculate_cross_entry_lunch(work_order_id, engineer, work_date, time_in, time_out, exclude_entry_id=None):
-    """Check if other time entries on the same day have lunch that overlaps with this work time"""
-    # Get all other time entries for this engineer on this date
+    """Check if other time entries on the same day (ANY work order) have lunch that overlaps with this work time"""
+    # Get all other time entries for this engineer on this date (across ALL work orders)
     query = TimeEntry.query.filter_by(
-        work_order_id=work_order_id,
         engineer=engineer,
         work_date=work_date
     )
@@ -450,10 +449,9 @@ def calculate_cross_entry_lunch(work_order_id, engineer, work_date, time_in, tim
     return total_lunch_overlap
 
 def check_time_overlap(work_order_id, engineer, work_date, time_in, time_out, exclude_entry_id=None):
-    """Check if this time entry overlaps with any existing entries for the same engineer on the same date"""
-    # Get all other time entries for this engineer on this date
+    """Check if this time entry overlaps with any existing entries for the same engineer on the same date (across ALL work orders)"""
+    # Get all other time entries for this engineer on this date (across ALL work orders)
     query = TimeEntry.query.filter_by(
-        work_order_id=work_order_id,
         engineer=engineer,
         work_date=work_date
     )
@@ -483,9 +481,10 @@ def check_time_overlap(work_order_id, engineer, work_date, time_in, time_out, ex
         
         # Check for overlap: entries overlap if start1 < end2 AND end1 > start2
         if new_start < existing_end and new_end > existing_start:
+            work_order_info = f" (Work Order: {entry.work_order.rmj_job_number})" if entry.work_order else ""
             return {
                 'overlap': True,
-                'message': f"Time overlap detected! This entry ({time_in.strftime('%H:%M')} - {time_out.strftime('%H:%M')}) overlaps with an existing entry ({entry.time_in.strftime('%H:%M')} - {entry.time_out.strftime('%H:%M')}) on {work_date.strftime('%Y-%m-%d')}."
+                'message': f"Time overlap detected! This entry ({time_in.strftime('%H:%M')} - {time_out.strftime('%H:%M')}) overlaps with an existing entry ({entry.time_in.strftime('%H:%M')} - {entry.time_out.strftime('%H:%M')}) on {work_date.strftime('%Y-%m-%d')}{work_order_info}."
             }
     
     return {'overlap': False}

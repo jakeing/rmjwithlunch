@@ -1052,7 +1052,7 @@
                           {{ entry.hours_worked | round(2) }}
                         {% endif %}
                       </td>
-                      <td class="text-center">
+                     <td class="text-center">
                         {% if is_adjustment %}
                           <span class="text-muted">—</span>
                         {% elif entry.lunch_start and entry.lunch_end %}
@@ -1062,6 +1062,12 @@
                             {% if entry.lunch_deduction > 0 %}
                               <br><span class="badge badge-warning badge-sm">-{{ (entry.lunch_deduction * 60) | round(0) | int }}m</span>
                             {% endif %}
+                          </div>
+                        {% elif entry.lunch_deduction > 0 %}
+                          <div class="small">
+                            <i class="fas fa-utensils text-info"></i>
+                            <span class="text-muted">Other WO</span>
+                            <br><span class="badge badge-info badge-sm">-{{ (entry.lunch_deduction * 60) | round(0) | int }}m</span>
                           </div>
                         {% else %}
                           <span class="text-muted">—</span>
