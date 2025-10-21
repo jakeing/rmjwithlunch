@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Work Order Management - RMJ Dashboard</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+  <style>
+    .navbar { background-color: #ffffff; }
+    .navbar-brand img { height: 40px; }
+    
+    .management-card {
+      border-radius: .35rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      margin-bottom: 1.5rem;
+    }
+    
+    .section-header {
+      background-color: #f8f9fa;
+      padding: 0.75rem 1rem;
+      border-bottom: 2px solid #dee2e6;
+      font-weight: 600;
+      color: #495057;
+    }
+    
+    .info-row {
+      padding: 0.5rem 1rem;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      align-items: center;
+    }
+    
+    .info-row:last-child {
+      border-bottom: none;
+    }
+    
+    .info-label {
+      font-weight: 500;
+      color: #6c757d;
+      min-width: 200px;
+      font-size: 0.9rem;
+    }
+    
+    .info-value {
+      flex: 1;
+      font-size: 0.9rem;
+    }
+    
+    .info-value input,
+    .info-value select,
+    .info-value textarea {
+      font-size: 0.9rem;
+    }
+    
+    .checkbox-large {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+    
+    .status-indicator {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 0.5rem;
+    }
+    
+    .status-complete {
+      background-color: #28a745;
+    }
+    
+    .status-pending {
+      background-color: #ffc107;
+    }
+    
+    .status-missing {
+      background-color: #dc3545;
+    }
+    
+    .quick-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+      background: white;
+      border-radius: 0.35rem;
+      padding: 1rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #007bff;
+    }
+    
+    .stat-label {
+      font-size: 0.85rem;
+      color: #6c757d;
+      margin-top: 0.5rem;
+    }
+    
+    .nav-tabs .nav-link {
+      color: #495057;
+    }
+    
+    .nav-tabs .nav-link.active {
+      font-weight: 600;
+    }
+    
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  {% include 'navbar.html' %}
+  
+  <div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2>
+        <i class="fas fa-clipboard-list mr-2"></i>
+        Work Order: {{ work_order.rmj_job_number }}
+      </h2>
+      <div class="no-print">
+        <a href="{{ url_for('admin_work_order_list') }}" class="btn btn-secondary">
+          <i class="fas fa-arrow-left mr-1"></i>Back to List
+        </a>
+        <button type="button" class="btn btn-primary" onclick="saveAllChanges()">
+          <i class="fas fa-save mr-1"></i>Save All Changes
+        </button>
+        <button type="button" class="btn btn-info" onclick="window.print()">
+          <i class="fas fa-print mr-1"></i>Print
+        </button>
+      </div>
+    </div>
+    
+    <!-- Quick Stats -->
+    <div class="quick-stats">
+      <div class="stat-card">
+        <div class="stat-value">{{ work_order.estimated_hours or 0 }}</div>
+        <div class="stat-label">Estimated Hours</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ work_order.hours_logged | round(1) }}</div>
+        <div class="stat-label">Hours Logged</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ work_order.change_orders|length }}</div>
+        <div class="stat-label">Change Orders</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">
+          {% if work_order.ready_to_bill %}
+            <i class="fas fa-check text-success"></i>
+          {% else %}
+            <i class="fas fa-times text-danger"></i>
+          {% endif %}
+        </div>
+        <div class="stat-label">Ready to Bill</div>
+      </div>
+    </div>
+    
+    <form id="tracking-form" method="POST">
+      <!-- Basic Information -->
+      <div class="management-card">
+        <div class="section-header">
+          <i class="fas fa-info-circle mr-2"></i>Basic Work Order Information
+        </div>
+        <div class="info-row">
+          <div class="info-label">WO# (ID)</div>
+          <div class="info-value">{{ work_order.id }}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Job# (RMJ Job Number)</div>
+          <div class="info-value">{{ work_order.rmj_job_number }}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Customer WO#</div>
+          <div class="info-value">{{ work_order.customer_work_order_number }}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">WO Received Date</div>
+          <div class="info-value">
+            <input type="date" name="wo_received_date" class="form-control form-control-sm" 
+                   value="{{ work_order.wo_received_date.strftime('%Y-%m-%d') if work_order.wo_received_date else '' }}">
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Priority</div>
+          <div class="info-value">
+            <select name="priority" class="form-control form-control-sm">
+              <option value="Low" {% if work_order.priority=='Low' %}selected{% endif %}>Low</option>
+              <option value="Medium" {% if work_order.priority=='Medium' %}selected{% endif %}>Medium</option>
+              <option value="High" {% if work_order.priority=='High' %}selected{% endif %}>High</option>
+            </select>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Description</div>
+          <div class="info-value">{{ work_order.description }}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Location</div>
+          <div class="info-value">{{ work_order.location or 'N/A' }}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Requested By</div>
+          <div class="info-value">{{ work_order.requested_by or 'N/A' }}</div>
+        </div>
+      </div>
+      
+      <!-- Work Authorization -->
+      <div class="management-card">
+        <div class="section-header">
+          <i class="fas fa-clipboard-check mr-2"></i>Work Authorization
+        </div>
+        <div class="info-row">
+          <div class="info-label">Work Released</div>
+          <div class="info-value">
+            <input type="checkbox" name="work_released" class="checkbox-large" 
+                   {% if work_order.work_released %}checked{% endif %}>
+            <span class="ml-2">Work can begin</span>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Estimate Needed</div>
+          <div class="info-value">
+            <input type="checkbox" name="estimate_needed" class="checkbox-large" 
+                   {% if work_order.estimate_needed %}checked{% endif %}>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Estimate Hours</div>
+          <div class="info-value">
+            <input type="number" step="0.1" name="estimated_hours" class="form-control form-control-sm" 
+                   value="{{ work_order.estimated_hours or '' }}">
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Estimate Amount ($)</div>
+          <div class="info-value">
+            <input type="number" step="0.01" name="estimate_amount" class="form-control form-control-sm" 
+                   value="{{ work_order.estimate_amount or '' }}" placeholder="0.00">
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Estimate Submitted Date</div>
+          <div class="info-value">
+            <input type="date" name="estimate_submitted_date" class="form-control form-control-sm" 
+                   value="{{ work_order.estimate_submitted_date.strftime('%Y-%m-%d') if work_order.estimate_submitted_date else '' }}">
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Estimate Approved</div>
+          <div class="info-value">
+            <input type="checkbox" name="estimate_approved" class="checkbox-large" 
+                   {% if work_order.estimate_approved %}checked{% endif %}>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Purchase Order -->
+      <div class="management-card">
+        <div class="section-header">
+          <i class="fas fa-file-invoice-dollar mr-2"></i>Purchase Order
+        </div>
+        <div class="info-row">
+          <div class="info-label">PUR Received Date</div>
+          <div class="info-value">
+            <input type="date" name="pur_received_date" class="form-control form-control-sm" 
+                   value="{{ work_order.pur_received_date.strftime('%Y-%m-%d') if work_order.pur_received_date else '' }}">
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">PUR # (Purchase Order Number)</div>
+          <div class="info-value">
+            <input type="text" name="pur_number" class="form-control form-control-sm" 
+                   value="{{ work_order.pur_number or '' }}" placeholder="PO-12345">
+          </div>
+        </div>
+      </div>
+      
+      <!-- Reporting -->
+      <div class="management-card">
+        <div class="section-header">
+          <i class="fas fa-file-alt mr-2"></i>Reporting
+        </div>
+        <div class="info-row">
+          <div class="info-label">Report Needed</div>
+          <div class="info-value">
+            <input type="checkbox" name="report_needed" class="checkbox-large" 
+                   {% if work_order.report_needed %}checked{% endif %}>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Report Review by Beverly</div>
+          <div class="info-value">
+            <select name="report_review_by_beverly" class="form-control form-control-sm">
+              <option value="">Not Started</option>
+              <option value="Pending" {% if work_order.report_review_by_beverly=='Pending' %}selected{% endif %}>Pending</option>
+              <option value="Approved" {% if work_order.report_review_by_beverly=='Approved' %}selected{% endif %}>Approved</option>
+              <option value="Needs Changes" {% if work_order.report_review_by_beverly=='Needs Changes' %}selected{% endif %}>Needs Changes</option>
+            </select>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Report Review Needed</div>
+          <div class="info-value">
+            <input type="checkbox" name="report_review_needed" class="checkbox-large" 
+                   {% if work_order.report_review_needed %}checked{% endif %}>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Report Approved Date</div>
+          <div class="info-value">
+            <input type="date" name="report_approved_date" class="form-control form-control-sm" 
+                   value="{{ work_order.report_approved_date.strftime('%Y-%m-%d') if work_order.report_approved_date else '' }}">
+          </div>
+        </div>
+      </div>
+      
+      <!-- Billing & Completion -->
+      <div class="management-card">
+        <div class="section-header">
+          <i class="fas fa-dollar-sign mr-2"></i>Billing & Completion
+        </div>
+        <div class="info-row">
+          <div class="info-label">Completion Notice Email Date</div>
+          <div class="info-value">
+            <input type="date" name="completion_notice_email_date" class="form-control form-control-sm" 
+                   value="{{ work_order.completion_notice_email_date.strftime('%Y-%m-%d') if work_order.completion_notice_email_date else '' }}">
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Ready to Bill</div>
+          <div class="info-value">
+            <input type="checkbox" name="ready_to_bill" class="checkbox-large" 
+                   {% if work_order.ready_to_bill %}checked{% endif %}>
+            <span class="ml-2">Can invoice customer</span>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Check for OT (Overtime)</div>
+          <div class="info-value">
+            <input type="checkbox" name="check_for_ot" class="checkbox-large" 
+                   {% if work_order.check_for_ot %}checked{% endif %}>
+            <span class="ml-2">Review for overtime charges</span>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Time Adjustments</div>
+          <div class="info-value">
+            <textarea name="time_adjustments" class="form-control form-control-sm" rows="3" 
+                      placeholder="Note any time corrections or adjustments">{{ work_order.time_adjustments or '' }}</textarea>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Change Orders -->
+      <div class="management-card">
+        <div class="section-header">
+          <i class="fas fa-exchange-alt mr-2"></i>Change Orders
+        </div>
+        <div class="info-row">
+          <div class="info-label">Number of Change Orders</div>
+          <div class="info-value">
+            <strong>{{ work_order.change_orders|length }}</strong>
+            {% if work_order.change_orders %}
+              <a href="{{ url_for('work_order_detail', work_order_id=work_order.id) }}#change-orders" class="ml-2 btn btn-sm btn-info">View Details</a>
+            {% endif %}
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Total CO Hours</div>
+          <div class="info-value">
+            <strong>{{ work_order.change_order_hours_logged | round(1) }}</strong> hours logged
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Change Order Date (First/Latest)</div>
+          <div class="info-value">
+            <input type="date" name="change_order_date" class="form-control form-control-sm" 
+                   value="{{ work_order.change_order_date.strftime('%Y-%m-%d') if work_order.change_order_date else '' }}">
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">CO Submitted Date</div>
+          <div class="info-value">
+            <input type="date" name="co_submitted_date" class="form-control form-control-sm" 
+                   value="{{ work_order.co_submitted_date.strftime('%Y-%m-%d') if work_order.co_submitted_date else '' }}">
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">CO Approval Received Date</div>
+          <div class="info-value">
+            <input type="date" name="co_approval_received_date" class="form-control form-control-sm" 
+                   value="{{ work_order.co_approval_received_date.strftime('%Y-%m-%d') if work_order.co_approval_received_date else '' }}">
+          </div>
+        </div>
+      </div>
+      
+      <!-- Final Tracking -->
+      <div class="management-card">
+        <div class="section-header">
+          <i class="fas fa-flag-checkered mr-2"></i>Final Tracking
+        </div>
+        <div class="info-row">
+          <div class="info-label">Hours Completed (Logged)</div>
+          <div class="info-value">
+            <strong>{{ work_order.total_hours_with_change_orders | round(2) }}</strong> hours
+            <small class="text-muted ml-2">({{ work_order.original_hours_logged | round(1) }} original + {{ work_order.change_order_hours_logged | round(1) }} CO)</small>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Time Entries</div>
+          <div class="info-value">
+            <strong>{{ work_order.time_entries|length }}</strong> entries
+            <a href="{{ url_for('work_order_detail', work_order_id=work_order.id) }}#time-entries" class="ml-2 btn btn-sm btn-info">View Details</a>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Notes</div>
+          <div class="info-value">
+            <textarea name="notes" class="form-control form-control-sm" rows="4" 
+                      placeholder="Additional comments, issues, or information about this work order">{{ work_order.notes or '' }}</textarea>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Action Buttons -->
+      <div class="text-center mb-4 no-print">
+        <button type="submit" class="btn btn-primary btn-lg">
+          <i class="fas fa-save mr-2"></i>Save All Changes
+        </button>
+        <a href="{{ url_for('work_order_detail', work_order_id=work_order.id) }}" class="btn btn-secondary btn-lg">
+          <i class="fas fa-eye mr-2"></i>View Full Work Order
+        </a>
+        <a href="{{ url_for('admin_work_order_list') }}" class="btn btn-outline-secondary btn-lg">
+          <i class="fas fa-list mr-2"></i>Back to List
+        </a>
+      </div>
+    </form>
+  </div>
+  
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function saveAllChanges() {
+      document.getElementById('tracking-form').submit();
+    }
+    
+    // Auto-save indication
+    $('input, select, textarea').on('change', function() {
+      $(this).css('background-color', '#fffacd');
+      setTimeout(() => {
+        $(this).css('background-color', '');
+      }, 1000);
+    });
+  </script>
+</body>
+</html>

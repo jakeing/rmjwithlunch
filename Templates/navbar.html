@@ -44,6 +44,7 @@
           <a class="dropdown-item" href="{{ url_for('export_excel') }}">Export Excel</a>
         </div>
       </li>
+
       <!-- Admin -->
       {% if session.get('user_id') and (User.query.get(session.get('user_id')).role.lower() == 'admin' or User.query.get(session.get('user_id')).username.lower() == 'admin') %}
       <li class="nav-item dropdown">
@@ -54,6 +55,7 @@
           <a class="dropdown-item" href="{{ url_for('admin_import_time_entries') }}">Import Time</a>
           <a class="dropdown-item" href="{{ url_for('admin_email_settings') }}">Notifications</a>
           <a class="dropdown-item" href="{{ url_for('classify_work_orders') }}">Classify Work Orders</a>
+          <a class="dropdown-item" href="{{ url_for('admin_work_order_list') }}">Work Order Management</a>
         </div>
       </li>
       {% endif %}

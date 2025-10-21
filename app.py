@@ -102,7 +102,39 @@ class WorkOrder(db.Model):
     classification = db.Column(db.String(50), default='Billable')
     approved_for_work = db.Column(db.Boolean, default=False, nullable=False)
     
-    # Relationships
+    # NEW FIELDS - Work Authorization
+    wo_received_date = db.Column(db.Date, nullable=True)
+    work_released = db.Column(db.Boolean, default=False)
+    estimate_needed = db.Column(db.Boolean, default=False)
+    estimate_amount = db.Column(db.Float, nullable=True)
+    estimate_submitted_date = db.Column(db.Date, nullable=True)
+    estimate_approved = db.Column(db.Boolean, default=False)
+    
+    # NEW FIELDS - Purchase Order
+    pur_received_date = db.Column(db.Date, nullable=True)
+    pur_number = db.Column(db.String(50), nullable=True)
+    
+    # NEW FIELDS - Reporting
+    report_needed = db.Column(db.Boolean, default=False)
+    report_review_by_beverly = db.Column(db.String(50), nullable=True)  # Status: Pending, Approved, Needs Changes
+    report_review_needed = db.Column(db.Boolean, default=False)
+    report_approved_date = db.Column(db.Date, nullable=True)
+    
+    # NEW FIELDS - Billing & Completion
+    completion_notice_email_date = db.Column(db.Date, nullable=True)
+    ready_to_bill = db.Column(db.Boolean, default=False)
+    check_for_ot = db.Column(db.Boolean, default=False)
+    time_adjustments = db.Column(db.Text, nullable=True)
+    
+    # NEW FIELDS - Change Orders (tracking dates)
+    change_order_date = db.Column(db.Date, nullable=True)
+    co_submitted_date = db.Column(db.Date, nullable=True)
+    co_approval_received_date = db.Column(db.Date, nullable=True)
+    
+    # NEW FIELDS - Final Tracking
+    notes = db.Column(db.Text, nullable=True)
+    
+    # Relationships (existing)
     time_entries = db.relationship('TimeEntry', backref='work_order', lazy=True, cascade="all, delete")
     documents = db.relationship('WorkOrderDocument', backref='work_order', lazy=True, cascade="all, delete")
 
@@ -135,12 +167,68 @@ class WorkOrder(db.Model):
             if "report" in doc.original_filename.lower() and doc.is_approved:
                 return True
         return False
+    
+    @property
+    def original_hours_logged(self):
+        """Calculate hours logged directly to work order (not change orders)"""
+        return sum(entry.hours_worked for entry in self.time_entries if entry.change_order_id is None)
 
+    @property
+    def change_order_hours_logged(self):
+        """Calculate total hours logged to all change orders"""
+        total = 0
+        for co in self.change_orders:
+            total += co.hours_logged
+        return total
+
+    @property
+    def total_hours_with_change_orders(self):
+        """Calculate total hours including change orders"""
+        return self.original_hours_logged + self.change_order_hours_logged
+
+    @property
+    def total_estimated_with_change_orders(self):
+        """Calculate total estimated hours including change orders"""
+        original = float(self.estimated_hours) if self.estimated_hours else 0.0
+        co_total = sum(float(co.estimated_hours) if co.estimated_hours else 0.0 for co in self.change_orders)
+        return original + co_total
+
+
+class ChangeOrder(db.Model):
+    """Change orders for work orders - tracks scope changes and additional work"""
+    id = db.Column(db.Integer, primary_key=True)
+    work_order_id = db.Column(db.Integer, db.ForeignKey('work_order.id'), nullable=False)
+    change_order_number = db.Column(db.String(50), nullable=False)  # e.g., "CO-001", "CO-002"
+    description = db.Column(db.String(200), nullable=False)
+    estimated_hours = db.Column(db.Float, nullable=True, default=0)
+    status = db.Column(db.String(50), default='Open')  # Open, Approved, Closed
+    created_date = db.Column(db.Date, default=datetime.utcnow)
+    approved_date = db.Column(db.Date, nullable=True)
+    notes = db.Column(db.Text, nullable=True)
+    
+    # Relationships
+    work_order = db.relationship('WorkOrder', backref='change_orders')
+    time_entries = db.relationship('TimeEntry', backref='change_order', lazy=True)
+    
+    @property
+    def hours_logged(self):
+        """Calculate total hours logged for this change order"""
+        return sum(entry.hours_worked for entry in self.time_entries)
+    
+    @property
+    def hours_remaining(self):
+        """Calculate remaining hours based on estimate"""
+        try:
+            estimated = float(self.estimated_hours)
+        except (TypeError, ValueError):
+            estimated = 0.0
+        return estimated - self.hours_logged
 
 class TimeEntry(db.Model):
     """Time tracking entries for work orders"""
     id = db.Column(db.Integer, primary_key=True)
     work_order_id = db.Column(db.Integer, db.ForeignKey('work_order.id'), nullable=False)
+    change_order_id = db.Column(db.Integer, db.ForeignKey('change_order.id'), nullable=True)
     task_id = db.Column(db.Integer, db.ForeignKey('project_task.id', name='fk_time_entry_task'), nullable=True)
     engineer = db.Column(db.String(50), nullable=False)
     work_date = db.Column(db.Date, nullable=False)
@@ -1462,6 +1550,152 @@ def delete_work_order_document(work_order_id, document_id):
     flash(f"Deleted document “{document.original_filename}”", "success")
     return redirect(url_for('work_order_detail', work_order_id=work_order_id))
 
+
+# =============================================================================
+# CHANGE ORDER ROUTES
+# =============================================================================
+@app.route('/workorder/<int:work_order_id>/change_order/new', methods=['GET', 'POST'])
+@login_required
+def new_change_order(work_order_id):
+    """Create a new change order for a work order"""
+    work_order = WorkOrder.query.get_or_404(work_order_id)
+    
+    if request.method == 'POST':
+        change_order_number = request.form.get('change_order_number')
+        description = request.form.get('description')
+        estimated_hours = float(request.form.get('estimated_hours') or 0)
+        status = request.form.get('status', 'Open')
+        notes = request.form.get('notes')
+        
+        # Check for duplicate change order number within this work order
+        existing_co = ChangeOrder.query.filter_by(
+            work_order_id=work_order_id,
+            change_order_number=change_order_number
+        ).first()
+        
+        if existing_co:
+            flash(f"Change Order {change_order_number} already exists for this work order.", "danger")
+            return render_template('new_change_order.html', work_order=work_order)
+        
+        new_co = ChangeOrder(
+            work_order_id=work_order_id,
+            change_order_number=change_order_number,
+            description=description,
+            estimated_hours=estimated_hours,
+            status=status,
+            notes=notes
+        )
+        
+        db.session.add(new_co)
+        
+        # Add change order hours to work order estimated hours
+        work_order.estimated_hours = (work_order.estimated_hours or 0) + estimated_hours
+        
+        db.session.commit()
+        
+        # Log the creation
+        log_change(
+            session.get('user_id'),
+            "Created ChangeOrder",
+            "ChangeOrder",
+            new_co.id,
+            f"Created change order {change_order_number} for Work Order #{work_order_id} (Added {estimated_hours} hours to work order estimate)"
+        )
+        db.session.commit()
+        
+        flash(f"Change Order {change_order_number} created successfully! Added {estimated_hours} hours to work order estimate.", "success")
+        return redirect(url_for('work_order_detail', work_order_id=work_order_id))
+    
+    # Generate next change order number
+    existing_cos = ChangeOrder.query.filter_by(work_order_id=work_order_id).all()
+    next_number = len(existing_cos) + 1
+    suggested_co_number = f"CO-{next_number:03d}"
+    
+    return render_template('new_change_order.html', 
+                         work_order=work_order,
+                         suggested_co_number=suggested_co_number)
+
+
+@app.route('/change_order/<int:change_order_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_change_order(change_order_id):
+    """Edit an existing change order"""
+    change_order = ChangeOrder.query.get_or_404(change_order_id)
+    work_order = change_order.work_order
+    
+    if request.method == 'POST':
+        # Store old estimated hours before updating
+        old_estimated_hours = change_order.estimated_hours or 0
+        
+        change_order.change_order_number = request.form.get('change_order_number')
+        change_order.description = request.form.get('description')
+        new_estimated_hours = float(request.form.get('estimated_hours') or 0)
+        change_order.estimated_hours = new_estimated_hours
+        change_order.status = request.form.get('status')
+        change_order.notes = request.form.get('notes')
+        
+        # Update approved date if status changed to Approved
+        if change_order.status == 'Approved' and not change_order.approved_date:
+            change_order.approved_date = datetime.now().date()
+        
+        # Adjust work order estimated hours by the difference
+        hours_difference = new_estimated_hours - old_estimated_hours
+        work_order.estimated_hours = (work_order.estimated_hours or 0) + hours_difference
+        
+        db.session.commit()
+        
+        # Log the edit
+        log_change(
+            session.get('user_id'),
+            "Edited ChangeOrder",
+            "ChangeOrder",
+            change_order.id,
+            f"Edited change order {change_order.change_order_number} (Adjusted work order estimate by {hours_difference:+.1f} hours)"
+        )
+        db.session.commit()
+        
+        flash(f"Change Order {change_order.change_order_number} updated successfully!", "success")
+        return redirect(url_for('work_order_detail', work_order_id=work_order.id))
+    
+    return render_template('edit_change_order.html', 
+                         change_order=change_order,
+                         work_order=work_order)
+
+
+@app.route('/change_order/<int:change_order_id>/delete', methods=['POST'])
+@login_required
+def delete_change_order(change_order_id):
+    """Delete a change order"""
+    change_order = ChangeOrder.query.get_or_404(change_order_id)
+    work_order = WorkOrder.query.get_or_404(change_order.work_order_id)
+    work_order_id = change_order.work_order_id
+    co_number = change_order.change_order_number
+    co_hours = change_order.estimated_hours or 0
+    
+    # Check if there are time entries linked to this change order
+    if change_order.time_entries:
+        flash(f"Cannot delete Change Order {co_number}: It has {len(change_order.time_entries)} time entries. Please reassign or delete them first.", "danger")
+        return redirect(url_for('work_order_detail', work_order_id=work_order_id))
+    
+    # Subtract change order hours from work order estimated hours
+    work_order.estimated_hours = (work_order.estimated_hours or 0) - co_hours
+    
+    db.session.delete(change_order)
+    
+    # Log the deletion
+    log_change(
+        session.get('user_id'),
+        "Deleted ChangeOrder",
+        "ChangeOrder",
+        change_order_id,
+        f"Deleted change order {co_number} from Work Order #{work_order_id} (Subtracted {co_hours} hours from work order estimate)"
+    )
+    
+    db.session.commit()
+    
+    flash(f"Change Order {co_number} deleted successfully! Removed {co_hours} hours from work order estimate.", "success")
+    return redirect(url_for('work_order_detail', work_order_id=work_order_id))
+
 # =============================================================================
 # TIME ENTRY ROUTES
 # =============================================================================
@@ -1490,6 +1724,18 @@ def add_time_inline(work_order_id):
         else:
             engineer = ""
     
+    # Get change order if specified
+    change_order_id = request.form.get('change_order_id')
+    if change_order_id and change_order_id.strip():
+        change_order_id = int(change_order_id)
+        # Verify the change order belongs to this work order
+        change_order = ChangeOrder.query.get(change_order_id)
+        if not change_order or change_order.work_order_id != work_order_id:
+            flash("Invalid change order selected.", "danger")
+            return redirect(url_for('work_order_detail', work_order_id=work_order_id))
+    else:
+        change_order_id = None
+    
     work_date_str = request.form.get('work_date')
     time_in_str = request.form.get('time_in')
     time_out_str = request.form.get('time_out')
@@ -1512,7 +1758,6 @@ def add_time_inline(work_order_id):
 
     hours_worked = calculate_hours(work_date, time_in, time_out)
 
-    # Handle lunch deduction
     # Handle lunch deduction
     had_lunch = request.form.get('had_lunch') == 'on'
     lunch_start = None
@@ -1539,16 +1784,14 @@ def add_time_inline(work_order_id):
                 flash(lunch_validation['message'], 'danger')
                 return redirect(url_for('work_order_detail', work_order_id=work_order_id))
 
-    # Validate lunch requirements (must take lunch if working > 6 hours across all work orders today)
+    # Validate lunch requirements
     lunch_req_validation = validate_lunch_requirements(engineer, work_date, time_in, time_out, had_lunch, lunch_start, lunch_end)
     if not lunch_req_validation['valid']:
         flash(lunch_req_validation['message'], 'warning')
         return redirect(url_for('work_order_detail', work_order_id=work_order_id))
 
     if had_lunch and lunch_start and lunch_end:
-            
-            # Calculate overlap between work time and lunch time
-            lunch_deduction = calculate_lunch_overlap(work_date, time_in, time_out, lunch_start, lunch_end)
+        lunch_deduction = calculate_lunch_overlap(work_date, time_in, time_out, lunch_start, lunch_end)
 
     # Also check if other entries on the same day have lunch that overlaps with this work time
     cross_entry_lunch = calculate_cross_entry_lunch(work_order_id, engineer, work_date, time_in, time_out)
@@ -1559,6 +1802,7 @@ def add_time_inline(work_order_id):
 
     new_entry = TimeEntry(
         work_order_id=work_order_id,
+        change_order_id=change_order_id,  # NEW: Link to change order if specified
         engineer=engineer,
         work_date=work_date,
         time_in=time_in,
@@ -1570,15 +1814,16 @@ def add_time_inline(work_order_id):
         description=description
     )
     db.session.add(new_entry)
-    db.session.commit()  # Commit to generate new_entry.id
+    db.session.commit()
 
-    # Log the creation of the time entry.
+    # Log the creation of the time entry
+    co_info = f" to Change Order {change_order.change_order_number}" if change_order_id else ""
     log_change(
         session.get('user_id'),
         "Created TimeEntry",
         "TimeEntry",
         new_entry.id,
-        f"Added time entry for engineer {engineer} with {hours_worked} hours on work order {work_order.rmj_job_number}"
+        f"Added time entry for engineer {engineer} with {hours_worked} hours on work order {work_order.rmj_job_number}{co_info}"
     )
     db.session.commit()
     
@@ -1592,7 +1837,6 @@ def add_time_inline(work_order_id):
         if setting:
             warning_threshold = setting.options.get('warning_threshold', 80)
             
-            # Check if we've just crossed a threshold
             if (percentage >= warning_threshold and (percentage - (hours_worked / work_order.estimated_hours * 100)) < warning_threshold) or \
                (percentage >= 100 and (percentage - (hours_worked / work_order.estimated_hours * 100)) < 100):
                 send_hours_threshold_notification(
@@ -1602,6 +1846,7 @@ def add_time_inline(work_order_id):
                     percentage
                 )
 
+    flash(f"Time entry added successfully{co_info}!", "success")
     return redirect(url_for('work_order_detail', work_order_id=work_order.id))
 
 
@@ -1959,6 +2204,23 @@ def new_timesheet():
         for i in range(1, 6):
             work_order_id = request.form.get(f'work_order_id_{i}')
             if work_order_id:
+                # GET CHANGE ORDER ID - ADD THIS
+                change_order_id = request.form.get(f'change_order_id_{i}')
+                if change_order_id and change_order_id.strip():
+                    change_order_id = int(change_order_id)
+                    # Verify the change order belongs to this work order
+                    change_order = ChangeOrder.query.get(change_order_id)
+                    if not change_order or change_order.work_order_id != int(work_order_id):
+                        flash(f"Entry {i}: Invalid change order selected.", "danger")
+                        work_orders = WorkOrder.query.all()
+                        users = User.query.order_by(User.full_name.nulls_last(), User.username).all()
+                        return render_template('timesheet_new.html', 
+                                            work_orders=work_orders, 
+                                            default_engineer=default_engineer,
+                                            current_user_id=current_user_id,
+                                            users=users)
+                else:
+                    change_order_id = None
                 wo = WorkOrder.query.get(int(work_order_id))
                 if wo and wo.status in ["Closed", "Complete"]:
                     continue
@@ -2065,6 +2327,7 @@ def new_timesheet():
 
                 new_entry = TimeEntry(
                     work_order_id=int(work_order_id),
+                    change_order_id=change_order_id,
                     engineer=engineer,
                     work_date=work_date,
                     time_in=time_in,
@@ -3269,6 +3532,28 @@ def create_task_from_gantt(project_id):
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/work_order/<int:work_order_id>/change_orders', methods=['GET'])
+@login_required
+def get_work_order_change_orders(work_order_id):
+    """API endpoint to get change orders for a work order"""
+    try:
+        work_order = WorkOrder.query.get_or_404(work_order_id)
+        
+        change_orders = []
+        for co in work_order.change_orders:
+            change_orders.append({
+                'id': co.id,
+                'change_order_number': co.change_order_number,
+                'description': co.description,
+                'status': co.status,
+                'estimated_hours': float(co.estimated_hours) if co.estimated_hours else 0,
+                'hours_logged': co.hours_logged,
+                'hours_remaining': co.hours_remaining
+            })
+        
+        return jsonify({'change_orders': change_orders})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/tasks/<int:task_id>/update', methods=['POST'])
 @login_required
@@ -4136,6 +4421,197 @@ def admin_import_time_entries():
     
     return render_template('admin_import_time_entries.html', message=message)
 
+
+# =============================================================================
+# ADMIN WORK ORDER MANAGEMENT ROUTES
+# =============================================================================
+@app.route('/admin/work_order_management')
+@login_required
+@admin_required
+def admin_work_order_list():
+    """List all work orders with tracking status"""
+    # Default to 'Open' if no status filter is provided
+    status_filter = request.args.get('status', 'Open')
+    ready_to_bill_filter = request.args.get('ready_to_bill', '')
+    sort_by = request.args.get('sort_by', 'id')
+    order = request.args.get('order', 'desc')
+    
+    query = WorkOrder.query
+    
+    # Apply status filter (now defaults to 'Open')
+    if status_filter:
+        query = query.filter_by(status=status_filter)
+    
+    # Apply ready to bill filter
+    if ready_to_bill_filter == 'yes':
+        query = query.filter_by(ready_to_bill=True)
+    elif ready_to_bill_filter == 'no':
+        query = query.filter_by(ready_to_bill=False)
+    
+    # Apply sorting
+    valid_sort_columns = {
+        'id': WorkOrder.id,
+        'rmj_job_number': WorkOrder.rmj_job_number,
+        'priority': WorkOrder.priority,
+        'wo_received_date': WorkOrder.wo_received_date,
+        'estimated_hours': WorkOrder.estimated_hours
+    }
+    
+    sort_column = valid_sort_columns.get(sort_by, WorkOrder.id)
+    
+    if order == 'desc':
+        query = query.order_by(sort_column.desc())
+    else:
+        query = query.order_by(sort_column.asc())
+    
+    work_orders = query.all()
+    
+    return render_template('admin_work_order_list.html', 
+                         work_orders=work_orders,
+                         status_filter=status_filter,
+                         sort_by=sort_by,
+                         order=order)
+
+
+@app.route('/admin/work_order_management/<int:work_order_id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def admin_work_order_management(work_order_id):
+    """Comprehensive work order tracking and management"""
+    work_order = WorkOrder.query.get_or_404(work_order_id)
+    
+    if request.method == 'POST':
+        # Update all tracking fields
+        work_order.wo_received_date = parse_date(request.form.get('wo_received_date'))
+        work_order.priority = request.form.get('priority')
+        
+        # Work Authorization
+        work_order.work_released = 'work_released' in request.form
+        work_order.estimate_needed = 'estimate_needed' in request.form
+        work_order.estimated_hours = float(request.form.get('estimated_hours') or 0)
+        work_order.estimate_amount = float(request.form.get('estimate_amount') or 0) if request.form.get('estimate_amount') else None
+        work_order.estimate_submitted_date = parse_date(request.form.get('estimate_submitted_date'))
+        work_order.estimate_approved = 'estimate_approved' in request.form
+        
+        # Purchase Order
+        work_order.pur_received_date = parse_date(request.form.get('pur_received_date'))
+        work_order.pur_number = request.form.get('pur_number')
+        
+        # Reporting
+        work_order.report_needed = 'report_needed' in request.form
+        work_order.report_review_by_beverly = request.form.get('report_review_by_beverly')
+        work_order.report_review_needed = 'report_review_needed' in request.form
+        work_order.report_approved_date = parse_date(request.form.get('report_approved_date'))
+        
+        # Billing & Completion
+        work_order.completion_notice_email_date = parse_date(request.form.get('completion_notice_email_date'))
+        work_order.ready_to_bill = 'ready_to_bill' in request.form
+        work_order.check_for_ot = 'check_for_ot' in request.form
+        work_order.time_adjustments = request.form.get('time_adjustments')
+        
+        # Change Orders
+        work_order.change_order_date = parse_date(request.form.get('change_order_date'))
+        work_order.co_submitted_date = parse_date(request.form.get('co_submitted_date'))
+        work_order.co_approval_received_date = parse_date(request.form.get('co_approval_received_date'))
+        
+        # Notes
+        work_order.notes = request.form.get('notes')
+        
+        db.session.commit()
+        
+        # Log the update
+        log_change(
+            session.get('user_id'),
+            "Updated Work Order Tracking",
+            "WorkOrder",
+            work_order.id,
+            f"Updated tracking information for {work_order.rmj_job_number}"
+        )
+        db.session.commit()
+        
+        flash('Work order tracking updated successfully!', 'success')
+        return redirect(url_for('admin_work_order_management', work_order_id=work_order.id))
+    
+    return render_template('admin_work_order_management.html', work_order=work_order)
+
+
+@app.route('/admin/export_work_order_tracking')
+@login_required
+@admin_required
+def admin_export_work_order_tracking():
+    """Export comprehensive work order tracking to Excel"""
+    work_orders = WorkOrder.query.all()
+    
+    data = []
+    for wo in work_orders:
+        data.append({
+            'WO#': wo.id,
+            'Job#': wo.rmj_job_number,
+            'Customer WO#': wo.customer_work_order_number,
+            'WO Received Date': wo.wo_received_date.strftime('%Y-%m-%d') if wo.wo_received_date else '',
+            'Priority': wo.priority,
+            'Description': wo.description,
+            'Location': wo.location,
+            'Requested By': wo.requested_by,
+            'Status': wo.status,
+            
+            'Work Released': 'Yes' if wo.work_released else 'No',
+            'Estimate Needed': 'Yes' if wo.estimate_needed else 'No',
+            'Estimate Hours': wo.estimated_hours,
+            'Estimate Amount': wo.estimate_amount,
+            'Estimate Submitted': wo.estimate_submitted_date.strftime('%Y-%m-%d') if wo.estimate_submitted_date else '',
+            'Estimate Approved': 'Yes' if wo.estimate_approved else 'No',
+            
+            'PUR Received Date': wo.pur_received_date.strftime('%Y-%m-%d') if wo.pur_received_date else '',
+            'PUR#': wo.pur_number,
+            
+            'Report Needed': 'Yes' if wo.report_needed else 'No',
+            'Report Review by Beverly': wo.report_review_by_beverly or '',
+            'Report Review Needed': 'Yes' if wo.report_review_needed else 'No',
+            'Report Approved Date': wo.report_approved_date.strftime('%Y-%m-%d') if wo.report_approved_date else '',
+            
+            'Completion Notice Date': wo.completion_notice_email_date.strftime('%Y-%m-%d') if wo.completion_notice_email_date else '',
+            'Ready to Bill': 'Yes' if wo.ready_to_bill else 'No',
+            'Check for OT': 'Yes' if wo.check_for_ot else 'No',
+            'Time Adjustments': wo.time_adjustments or '',
+            
+            'Change Order Date': wo.change_order_date.strftime('%Y-%m-%d') if wo.change_order_date else '',
+            'Number of Change Orders': len(wo.change_orders),
+            'CO Hours Logged': wo.change_order_hours_logged,
+            'CO Submitted Date': wo.co_submitted_date.strftime('%Y-%m-%d') if wo.co_submitted_date else '',
+            'CO Approval Date': wo.co_approval_received_date.strftime('%Y-%m-%d') if wo.co_approval_received_date else '',
+            
+            'Hours Completed': wo.total_hours_with_change_orders,
+            'Original Hours': wo.original_hours_logged,
+            'CO Hours': wo.change_order_hours_logged,
+            'Time Entries': len(wo.time_entries),
+            'Notes': wo.notes or '',
+        })
+    
+    df = pd.DataFrame(data)
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='Work Order Tracking')
+        
+        # Format the worksheet
+        workbook = writer.book
+        worksheet = writer.sheets['Work Order Tracking']
+        
+        # Set column widths
+        worksheet.set_column('A:C', 12)
+        worksheet.set_column('D:F', 15)
+        worksheet.set_column('G:H', 30)
+        worksheet.set_column('I:Z', 12)
+        worksheet.set_column('AA:AZ', 15)
+    
+    output.seek(0)
+    
+    return send_file(
+        output,
+        download_name=f"work_order_tracking_{datetime.now().strftime('%Y%m%d')}.xlsx",
+        as_attachment=True,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
 
 # =============================================================================
 # TIME ENTRY REASSIGNMENT ROUTES

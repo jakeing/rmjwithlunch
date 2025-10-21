@@ -248,6 +248,7 @@
             <a class="dropdown-item" href="{{ url_for('admin_users') }}">User Mgmt</a>
             <a class="dropdown-item" href="{{ url_for('admin_import_time_entries') }}">Import Time</a>
             <a class="dropdown-item" href="{{ url_for('admin_email_settings') }}">Notifications</a>
+            <a class="dropdown-item" href="{{ url_for('admin_work_order_list') }}">Work Order Management</a>
           </div>
         </li>
         {% endif %}
@@ -323,6 +324,15 @@
                   {% endfor %}
                 </select>
                 <small class="form-text text-muted">Only open work orders can be selected</small>
+              </div>
+
+              <!-- NEW: Change Order Field -->
+              <div class="form-group" id="change_order_group_{{ i }}" style="display: none;">
+                <label for="change_order_id_{{ i }}">Charge To:</label>
+                <select name="change_order_id_{{ i }}" id="change_order_id_{{ i }}" class="form-control">
+                  <option value="">Main Work Order</option>
+                </select>
+                <small class="form-text text-muted">Optional: Select change order if applicable</small>
               </div>
               
               <div class="row">
@@ -482,6 +492,42 @@
       return workOrder.text;
     }
     
+    // Load change orders when work order is selected
+    $('.select2[id^="work_order_id_"]').on('change', function() {
+      const entryNum = $(this).attr('id').split('_').pop();
+      const workOrderId = $(this).val();
+      const $changeOrderGroup = $(`#change_order_group_${entryNum}`);
+      const $changeOrderSelect = $(`#change_order_id_${entryNum}`);
+      
+      if (workOrderId) {
+        // Fetch change orders for this work order
+        $.ajax({
+          url: `/api/work_order/${workOrderId}/change_orders`,
+          method: 'GET',
+          success: function(data) {
+            $changeOrderSelect.empty().append('<option value="">Main Work Order</option>');
+            
+            if (data.change_orders && data.change_orders.length > 0) {
+              data.change_orders.forEach(co => {
+                const desc = co.description.length > 30 ? co.description.substring(0, 30) + '...' : co.description;
+                $changeOrderSelect.append(
+                  `<option value="${co.id}">${co.change_order_number} - ${desc}</option>`
+                );
+              });
+              $changeOrderGroup.slideDown();
+            } else {
+              $changeOrderGroup.slideUp();
+            }
+          },
+          error: function() {
+            $changeOrderGroup.slideUp();
+          }
+        });
+      } else {
+        $changeOrderGroup.slideUp();
+      }
+    });
+
     // Set today's date in the sidebar
     var today = new Date();
     var formattedDate = today.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });

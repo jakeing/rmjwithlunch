@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>New Change Order - {{ work_order.rmj_job_number }} - RMJ Dashboard</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+  <style>
+    .navbar { background-color: #ffffff; }
+    .navbar-brand img { height: 40px; }
+    .card {
+      border-radius: .35rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      margin-bottom: 1.5rem;
+    }
+    .required-field::after {
+      content: "*";
+      color: #dc3545;
+      margin-left: 0.25rem;
+    }
+  </style>
+</head>
+<body>
+  {% include 'navbar.html' %}
+  
+  <div class="container mt-4">
+    <div class="row">
+      <div class="col-lg-8 offset-lg-2">
+        <div class="card">
+          <div class="card-header">
+            <h4 class="mb-0">
+              <i class="fas fa-plus-circle mr-2"></i>New Change Order
+            </h4>
+            <small class="text-muted">
+              For Work Order: {{ work_order.rmj_job_number }} - {{ work_order.description }}
+            </small>
+          </div>
+          <div class="card-body">
+            <form method="POST">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label class="required-field">Change Order Number:</label>
+                    <input type="text" name="change_order_number" class="form-control" 
+                           value="{{ suggested_co_number }}" required>
+                    <small class="form-text text-muted">e.g., CO-001, CO-002</small>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label class="required-field">Estimated Hours:</label>
+                    <input type="number" step="0.1" name="estimated_hours" class="form-control" 
+                           value="0" required>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label class="required-field">Description:</label>
+                <textarea name="description" class="form-control" rows="3" required 
+                          placeholder="Describe the change or additional work"></textarea>
+              </div>
+              
+              <div class="form-group">
+                <label>Status:</label>
+                <select name="status" class="form-control">
+                  <option value="Open">Open</option>
+                  <option value="Approved">Approved</option>
+                  <option value="Closed">Closed</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label>Notes:</label>
+                <textarea name="notes" class="form-control" rows="3" 
+                          placeholder="Additional notes or comments"></textarea>
+              </div>
+              
+              <div class="form-group">
+                <button type="submit" class="btn btn-primary">
+                  <i class="fas fa-save mr-1"></i>Create Change Order
+                </button>
+                <a href="{{ url_for('work_order_detail', work_order_id=work_order.id) }}" 
+                   class="btn btn-secondary">
+                  <i class="fas fa-times mr-1"></i>Cancel
+                </a>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle mr-2"></i>
+          <strong>About Change Orders:</strong> Change orders track additional work or scope changes 
+          beyond the original work order. They have separate hour estimates and tracking, but all 
+          hours roll up to the parent work order's total.
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

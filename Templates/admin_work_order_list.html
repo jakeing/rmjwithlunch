@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Work Order Management - RMJ Dashboard</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+  <style>
+    .navbar { background-color: #ffffff; }
+    .navbar-brand img { height: 40px; }
+    
+    .progress-indicator {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 0.25rem;
+    }
+    
+    .progress-complete { background-color: #28a745; }
+    .progress-partial { background-color: #ffc107; }
+    .progress-missing { background-color: #dc3545; }
+    
+    .table-compact {
+      font-size: 0.8rem;
+    }
+    
+    .table-compact td,
+    .table-compact th {
+      padding: 0.4rem 0.3rem;
+      vertical-align: middle;
+    }
+    
+    .filter-card {
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 0.35rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .sortable-header {
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+    
+    .sortable-header:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .sort-icon {
+      font-size: 0.7rem;
+      margin-left: 0.25rem;
+      opacity: 0.5;
+    }
+    
+    .sort-icon.active {
+      opacity: 1;
+    }
+    
+    .badge-xs {
+      font-size: 0.7rem;
+      padding: 0.2rem 0.4rem;
+    }
+    
+    .text-truncate-custom {
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: inline-block;
+    }
+    
+    .priority-high { color: #dc3545; font-weight: 600; }
+    .priority-medium { color: #ffc107; font-weight: 600; }
+    .priority-low { color: #6c757d; }
+    
+    .table-hover tbody tr:hover {
+      background-color: rgba(0, 123, 255, 0.05);
+    }
+  </style>
+</head>
+<body>
+  {% include 'navbar.html' %}
+  
+  <div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2><i class="fas fa-clipboard-list mr-2"></i>Work Order Management</h2>
+      <div>
+        <a href="{{ url_for('admin_export_work_order_tracking') }}" class="btn btn-success">
+          <i class="fas fa-file-excel mr-1"></i>Export to Excel
+        </a>
+      </div>
+    </div>
+    
+    <!-- Filters -->
+    <div class="filter-card">
+      <form method="GET" class="form-inline" id="filterForm">
+        <div class="form-group mr-3">
+          <label class="mr-2"><strong>Status:</strong></label>
+          <select name="status" class="form-control form-control-sm" onchange="this.form.submit()">
+            <option value="Open" {% if status_filter=='Open' %}selected{% endif %}>Open</option>
+            <option value="Complete" {% if status_filter=='Complete' %}selected{% endif %}>Complete</option>
+            <option value="Closed" {% if status_filter=='Closed' %}selected{% endif %}>Closed</option>
+          </select>
+        </div>
+        <div class="form-group mr-3">
+          <label class="mr-2"><strong>Ready to Bill:</strong></label>
+          <select name="ready_to_bill" class="form-control form-control-sm" onchange="this.form.submit()">
+            <option value="">All</option>
+            <option value="yes" {% if request.args.get('ready_to_bill')=='yes' %}selected{% endif %}>Yes</option>
+            <option value="no" {% if request.args.get('ready_to_bill')=='no' %}selected{% endif %}>No</option>
+          </select>
+        </div>
+        <input type="hidden" name="sort_by" value="{{ sort_by }}">
+        <input type="hidden" name="order" value="{{ order }}">
+        <a href="{{ url_for('admin_work_order_list') }}" class="btn btn-secondary btn-sm">
+          <i class="fas fa-redo mr-1"></i>Reset Filters
+        </a>
+      </form>
+    </div>
+    
+    <!-- Table -->
+    <div class="table-responsive">
+      <table class="table table-hover table-striped table-bordered table-compact">
+        <thead class="thead-dark">
+          <tr>
+            <th class="sortable-header" onclick="sortBy('id')">
+              WO#
+              <span class="sort-icon {% if sort_by=='id' %}active{% endif %}">
+                {% if sort_by=='id' and order=='asc' %}
+                  <i class="fas fa-sort-up"></i>
+                {% elif sort_by=='id' and order=='desc' %}
+                  <i class="fas fa-sort-down"></i>
+                {% else %}
+                  <i class="fas fa-sort"></i>
+                {% endif %}
+              </span>
+            </th>
+            <th class="sortable-header" onclick="sortBy('rmj_job_number')">
+              Job#
+              <span class="sort-icon {% if sort_by=='rmj_job_number' %}active{% endif %}">
+                {% if sort_by=='rmj_job_number' and order=='asc' %}
+                  <i class="fas fa-sort-up"></i>
+                {% elif sort_by=='rmj_job_number' and order=='desc' %}
+                  <i class="fas fa-sort-down"></i>
+                {% else %}
+                  <i class="fas fa-sort"></i>
+                {% endif %}
+              </span>
+            </th>
+            <th>Description</th>
+            <th class="sortable-header" onclick="sortBy('priority')">
+              Priority
+              <span class="sort-icon {% if sort_by=='priority' %}active{% endif %}">
+                <i class="fas fa-sort"></i>
+              </span>
+            </th>
+            <th>Owner</th>
+            <th class="sortable-header" onclick="sortBy('wo_received_date')">
+              WO Received
+              <span class="sort-icon {% if sort_by=='wo_received_date' %}active{% endif %}">
+                <i class="fas fa-sort"></i>
+              </span>
+            </th>
+            <th class="text-center">Est.<br>Approved</th>
+            <th class="text-center">PUR<br>Received</th>
+            <th class="text-center">Report<br>Status</th>
+            <th class="text-center">Completion<br>Notice</th>
+            <th class="text-center">Ready<br>to Bill</th>
+            <th class="text-center">COs</th>
+            <th class="text-right sortable-header" onclick="sortBy('estimated_hours')">
+              Hours
+              <span class="sort-icon {% if sort_by=='estimated_hours' %}active{% endif %}">
+                <i class="fas fa-sort"></i>
+              </span>
+            </th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for wo in work_orders %}
+          <tr>
+            <td><strong>{{ wo.id }}</strong></td>
+            <td><strong>{{ wo.rmj_job_number }}</strong></td>
+            <td>
+              <span class="text-truncate-custom" title="{{ wo.description }}">
+                {{ wo.description }}
+              </span>
+            </td>
+            <td>
+              <span class="{% if wo.priority=='High' %}priority-high{% elif wo.priority=='Medium' %}priority-medium{% else %}priority-low{% endif %}">
+                {{ wo.priority or 'N/A' }}
+              </span>
+            </td>
+            <td><small>{{ wo.owner or 'N/A' }}</small></td>
+            <td class="text-center">
+              {% if wo.wo_received_date %}
+                <small>{{ wo.wo_received_date.strftime('%m/%d/%y') }}</small>
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              <span class="progress-indicator {% if wo.estimate_approved %}progress-complete{% elif wo.estimate_needed %}progress-partial{% else %}progress-missing{% endif %}" 
+                    title="{% if wo.estimate_approved %}Approved{% elif wo.estimate_needed %}Pending{% else %}Not Required{% endif %}"></span>
+            </td>
+            <td class="text-center">
+              <span class="progress-indicator {% if wo.pur_received_date %}progress-complete{% else %}progress-missing{% endif %}"
+                    title="{% if wo.pur_received_date %}Received {{ wo.pur_received_date.strftime('%m/%d') }}{% else %}Not Received{% endif %}"></span>
+            </td>
+            <td class="text-center">
+              <span class="progress-indicator {% if wo.report_approved_date %}progress-complete{% elif wo.report_needed %}progress-partial{% else %}progress-missing{% endif %}"
+                    title="{% if wo.report_approved_date %}Approved{% elif wo.report_needed %}Pending{% else %}Not Required{% endif %}"></span>
+            </td>
+            <td class="text-center">
+              <span class="progress-indicator {% if wo.completion_notice_email_date %}progress-complete{% else %}progress-missing{% endif %}"
+                    title="{% if wo.completion_notice_email_date %}Sent {{ wo.completion_notice_email_date.strftime('%m/%d') }}{% else %}Not Sent{% endif %}"></span>
+            </td>
+            <td class="text-center">
+              {% if wo.ready_to_bill %}
+                <span class="badge badge-success badge-xs"><i class="fas fa-check"></i></span>
+              {% else %}
+                <span class="badge badge-secondary badge-xs"><i class="fas fa-times"></i></span>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              {% if wo.change_orders|length > 0 %}
+                <span class="badge badge-info badge-xs">{{ wo.change_orders|length }}</span>
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+            <td class="text-right">
+              <small>
+                <strong>{{ wo.total_hours_with_change_orders | round(1) }}</strong>
+                <span class="text-muted">/ {{ wo.total_estimated_with_change_orders | round(1) }}</span>
+              </small>
+            </td>
+            <td class="text-center">
+              <a href="{{ url_for('admin_work_order_management', work_order_id=wo.id) }}" 
+                 class="btn btn-sm btn-primary" title="Manage Work Order">
+                <i class="fas fa-edit"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    
+    {% if work_orders|length == 0 %}
+    <div class="alert alert-info text-center">
+      <i class="fas fa-info-circle mr-2"></i>No work orders found with the selected filters.
+    </div>
+    {% else %}
+    <div class="text-muted text-center mb-4">
+      <small>Showing {{ work_orders|length }} work order(s)</small>
+    </div>
+    {% endif %}
+  </div>
+  
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function sortBy(column) {
+      const currentSort = '{{ sort_by }}';
+      const currentOrder = '{{ order }}';
+      
+      let newOrder = 'asc';
+      if (currentSort === column) {
+        // Toggle order if clicking the same column
+        newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+      }
+      
+      // Get current URL parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      urlParams.set('sort_by', column);
+      urlParams.set('order', newOrder);
+      
+      // Navigate to new URL
+      window.location.search = urlParams.toString();
+    }
+    
+    // Add tooltips
+    $(function () {
+      $('[title]').tooltip();
+    });
+  </script>
+</body>
+</html>
