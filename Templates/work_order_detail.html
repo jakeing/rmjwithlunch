@@ -278,6 +278,53 @@
       margin-bottom: 1.5rem;
     }
     
+    /* Overtime and Night Shift Indicators */
+    .overtime-indicator {
+      color: #ff9800;
+      margin-left: 5px;
+      font-size: 1.1em;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .nightshift-indicator {
+      color: #2196F3;
+      margin-left: 5px;
+      font-size: 1.1em;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    .indicator-tooltip {
+      position: relative;
+      display: inline-block;
+    }
+
+    .indicator-tooltip .tooltiptext {
+      visibility: hidden;
+      width: 160px;
+      background-color: #555;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 5px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      margin-left: -80px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-size: 0.75rem;
+    }
+
+    .indicator-tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: 1;
+    }
+
     /* Summary card styles */
     .summary-card {
       background-color: #f8f9fa;
@@ -1871,6 +1918,90 @@
       }
     });
     
+    // Function to check and add overtime/night shift indicators
+    function addWorkHoursIndicators() {
+      $('.editable-row').each(function() {
+        const $row = $(this);
+        const hoursText = $row.find('td:nth-child(6)').text().trim();
+        const timeInText = $row.find('[data-field="time_in"]').text().trim();
+        const timeOutText = $row.find('[data-field="time_out"]').text().trim();
+        
+        // Parse hours
+        const hours = parseFloat(hoursText);
+        
+        // Check for overtime (>6 hours)
+        if (!isNaN(hours) && hours > 6) {
+          const hoursCell = $row.find('td:nth-child(6)');
+          if (hoursCell.find('.overtime-indicator').length === 0) {
+            hoursCell.append('<span class="indicator-tooltip overtime-indicator"><i class="fas fa-clock"></i><span class="tooltiptext">Overtime: ' + hours.toFixed(2) + ' hours</span></span>');
+          }
+        }
+        
+        // Check for night shift (6PM to 6AM)
+        if (timeInText && timeOutText && timeInText !== '—' && timeOutText !== '—') {
+          const timeIn = parseTime(timeInText);
+          const timeOut = parseTime(timeOutText);
+          
+          if (timeIn && timeOut) {
+            const isNightShift = checkNightShift(timeIn, timeOut);
+            
+            if (isNightShift) {
+              const timeInCell = $row.find('[data-field="time_in"]').parent();
+              if (timeInCell.find('.nightshift-indicator').length === 0) {
+                timeInCell.append('<span class="indicator-tooltip nightshift-indicator"><i class="fas fa-moon"></i><span class="tooltiptext">Night Shift</span></span>');
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Helper function to parse time string (HH:MM)
+    function parseTime(timeStr) {
+      const parts = timeStr.split(':');
+      if (parts.length === 2) {
+        return {
+          hours: parseInt(parts[0]),
+          minutes: parseInt(parts[1])
+        };
+      }
+      return null;
+    }
+
+    // Check if work period overlaps with night shift (6PM-6AM)
+    function checkNightShift(timeIn, timeOut) {
+      const nightStart = 18; // 6 PM
+      const nightEnd = 6;    // 6 AM
+      
+      const inHour = timeIn.hours;
+      const outHour = timeOut.hours;
+      
+      // Check if time in is during night hours (6PM-midnight or midnight-6AM)
+      if (inHour >= nightStart || inHour < nightEnd) {
+        return true;
+      }
+      
+      // Check if time out is during night hours
+      if (outHour >= nightStart || outHour < nightEnd) {
+        return true;
+      }
+      
+      // Check if shift spans across night hours
+      if (inHour < nightStart && outHour >= nightStart) {
+        return true;
+      }
+      
+      // Check for overnight shifts (e.g., 5PM to 7AM next day)
+      if (outHour < inHour && (inHour >= nightStart || outHour < nightEnd)) {
+        return true;
+      }
+      
+      return false;
+    }
+
+    // Call the function on page load
+    addWorkHoursIndicators();
+
     // Validate lunch timing on form submit
     $('form').not('#edit-form').submit(function(e) {
       const timeIn = $('input[name="time_in"]').val();
@@ -2089,7 +2220,9 @@
           
           // Optionally update hours worked if returned in response
           if (response && response.hours_worked) {
-            viewRow.find('td:nth-child(6)').text(parseFloat(response.hours_worked).toFixed(2));
+          viewRow.find('td:nth-child(6)').text(parseFloat(response.hours_worked).toFixed(2));
+          // Refresh indicators after update
+          addWorkHoursIndicators();
             editRow.find('td:nth-child(6)').text(parseFloat(response.hours_worked).toFixed(2));
           }
         },

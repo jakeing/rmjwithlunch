@@ -157,6 +157,53 @@
     font-weight: 600;
   }
 
+  /* Overtime and Night Shift Indicators */
+  .overtime-indicator {
+    color: #ff9800;
+    margin-left: 5px;
+    font-size: 1.1em;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  .nightshift-indicator {
+    color: #2196F3;
+    margin-left: 5px;
+    font-size: 1.1em;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  .indicator-tooltip {
+    position: relative;
+    display: inline-block;
+  }
+
+  .indicator-tooltip .tooltiptext {
+    visibility: hidden;
+    width: 160px;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -80px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 0.75rem;
+  }
+
+  .indicator-tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+  }
+
   /* ==========================================================================
      TABLES
      ========================================================================== */
@@ -1029,13 +1076,21 @@
                             {{ entry.work_date.strftime('%Y-%m-%d') }}
                           </div>
                         </td>
-                      <td class="text-center">
-                        {% if is_adjustment %}
-                          <span class="text-muted">—</span>
-                        {% else %}
-                          {{ entry.time_in.strftime('%H:%M') }}
-                        {% endif %}
-                      </td>
+                        <td class="text-center">
+                          {% if is_adjustment %}
+                            <span class="text-muted">—</span>
+                          {% else %}
+                            {{ entry.time_in.strftime('%H:%M') }}
+                            {% set time_in_hour = entry.time_in.hour %}
+                            {% set time_out_hour = entry.time_out.hour %}
+                            {% if time_in_hour >= 18 or time_in_hour < 6 or time_out_hour >= 18 or time_out_hour < 6 or (time_out_hour < time_in_hour and (time_in_hour >= 18 or time_out_hour < 6)) %}
+                              <span class="indicator-tooltip nightshift-indicator">
+                                <i class="fas fa-moon"></i>
+                                <span class="tooltiptext">Night Shift</span>
+                              </span>
+                            {% endif %}
+                          {% endif %}
+                        </td>
                       <td class="text-center">
                         {% if is_adjustment %}
                           <span class="text-muted">—</span>
@@ -1050,6 +1105,12 @@
                           <span class="hours-positive">+{{ entry.hours_worked | round(2) }}</span>
                         {% else %}
                           {{ entry.hours_worked | round(2) }}
+                          {% if entry.hours_worked > 6 %}
+                            <span class="indicator-tooltip overtime-indicator">
+                              <i class="fas fa-clock"></i>
+                              <span class="tooltiptext">Overtime: {{ entry.hours_worked | round(2) }} hours</span>
+                            </span>
+                          {% endif %}
                         {% endif %}
                       </td>
                      <td class="text-center">
@@ -1972,6 +2033,46 @@
       loadEntriesForDate(date);
       $('#entriesModal').fadeIn();
     });
+
+    $(document).ready(function() {
+    // Function to add indicators to calendar view entries
+    function addCalendarIndicators() {
+      $('.calendar-entry').each(function() {
+        const $entry = $(this);
+        const title = $entry.attr('title');
+        
+        // Extract hours from title
+        const hoursMatch = title.match(/(\d+\.?\d*)\s*hours/);
+        if (hoursMatch) {
+          const hours = parseFloat(hoursMatch[1]);
+          if (hours > 6) {
+            $entry.find('.small').append(' <i class="fas fa-clock overtime-indicator" title="Overtime"></i>');
+          }
+        }
+        
+        // Check for night shift times in calendar entries
+        const timeText = $entry.text();
+        const timeMatch = timeText.match(/(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})/);
+        if (timeMatch) {
+          const startHour = parseInt(timeMatch[1]);
+          const endHour = parseInt(timeMatch[3]);
+          
+          if (startHour >= 18 || startHour < 6 || endHour >= 18 || endHour < 6 || 
+              (endHour < startHour && (startHour >= 18 || endHour < 6))) {
+            $entry.find('.small').append(' <i class="fas fa-moon nightshift-indicator" title="Night Shift"></i>');
+          }
+        }
+      });
+    }
+    
+    // Call on page load
+    addCalendarIndicators();
+    
+    // Also call when switching views
+    $('.view-toggle button').on('click', function() {
+      setTimeout(addCalendarIndicators, 100);
+    });
+  });
 
     // Function to load entries for a specific date
     function loadEntriesForDate(date) {
